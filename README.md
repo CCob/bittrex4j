@@ -16,4 +16,4 @@ Java library for accessing the Bittrex Web API's and Web Sockets.
 
 ## Thanks
 
-Thanks to @platelminto for the java-bittrex project and @dparlevliet for the node.bittrex.api where both have been used for inspiration.
+Thanks to platelminto for the java-bittrex project and dparlevliet for the node.bittrex.api where both have been used for inspiration.
