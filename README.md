@@ -1,5 +1,5 @@
 # bittrex4j
-Java library for accessing the Bittrex Web API's and Web Sockets.  
+Java library for accessing the Bittrex Web API's and Web Sockets.  It currently uses a mix of v1.1 and the undocumented v2 API.    
 
 ## TODO
 
