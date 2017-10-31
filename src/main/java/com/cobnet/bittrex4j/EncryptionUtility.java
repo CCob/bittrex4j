@@ -20,9 +20,9 @@ import javax.crypto.spec.SecretKeySpec;
 
 import org.apache.commons.codec.binary.Hex;
 
-public class EncryptionUtility {
+class EncryptionUtility {
 
-    public static String calculateHash(String secret, String url, String algorithm) {
+    static String calculateHash(String secret, String url, String algorithm) {
 
         try {
             Mac shaHmac = Mac.getInstance(algorithm);
@@ -31,16 +31,14 @@ public class EncryptionUtility {
             byte[] hash = shaHmac.doFinal(url.getBytes());
             return Hex.encodeHexString(hash);
 
-        } catch (NoSuchAlgorithmException e) {
-            e.printStackTrace();
-        } catch (InvalidKeyException e) {
+        } catch (NoSuchAlgorithmException | InvalidKeyException e) {
             e.printStackTrace();
         }
 
         return null;
     }
 
-    public static String generateNonce() {
+    static String generateNonce() {
 
         try {
             SecureRandom random = SecureRandom.getInstance("SHA1PRNG");
@@ -52,9 +50,7 @@ public class EncryptionUtility {
             String nonce = new String(Base64.getEncoder().encode(nonceBytes), "UTF-8");
             return nonce;
 
-        } catch (NoSuchAlgorithmException e) {
-            e.printStackTrace();
-        } catch (UnsupportedEncodingException e) {
+        } catch (NoSuchAlgorithmException | UnsupportedEncodingException e) {
             e.printStackTrace();
         }
 

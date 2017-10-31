@@ -9,7 +9,7 @@
  * /
  */
 
-import org.apache.http.client.methods.HttpGet;
+package com.cobnet.bittrex4j;import org.apache.http.client.methods.HttpGet;
 import org.mockito.ArgumentMatcher;
 
 public class UrlMatcher extends ArgumentMatcher<HttpGet> {

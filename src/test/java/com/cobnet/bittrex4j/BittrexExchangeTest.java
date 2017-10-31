@@ -9,9 +9,7 @@
  * /
  */
 
-import com.cobnet.bittrex4j.BittrexExchange;
-import com.cobnet.bittrex4j.HttpFactory;
-import com.cobnet.bittrex4j.dao.*;
+package com.cobnet.bittrex4j;import com.cobnet.bittrex4j.dao.*;
 import org.apache.http.HttpResponse;
 import org.apache.http.HttpStatus;
 import org.apache.http.ProtocolVersion;

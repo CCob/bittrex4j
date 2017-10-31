@@ -72,7 +72,7 @@ public class BittrexExchange  {
     private void connectToWebsocket() {
 
         hubConnection = new HubConnection("https://socket.bittrex.com",null,true,
-                new SingalRLoggerDecorator(log));
+                new SignalRLoggerDecorator(log));
 
         hubProxy = hubConnection.createHubProxy("CoreHub");
 

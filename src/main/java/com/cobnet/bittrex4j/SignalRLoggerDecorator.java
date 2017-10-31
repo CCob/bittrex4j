@@ -14,11 +14,11 @@ package com.cobnet.bittrex4j;
 import donky.microsoft.aspnet.signalr.client.LogLevel;
 import donky.microsoft.aspnet.signalr.client.Logger;
 
-public class SingalRLoggerDecorator implements Logger {
+public class SignalRLoggerDecorator implements Logger {
 
     org.slf4j.Logger log;
 
-    public SingalRLoggerDecorator(org.slf4j.Logger log) {
+    SignalRLoggerDecorator(org.slf4j.Logger log) {
         this.log = log;
     }
 
