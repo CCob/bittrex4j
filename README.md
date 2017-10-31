@@ -7,7 +7,7 @@ Java library for accessing the Bittrex Web API's and Web Sockets.
 
 * Withdrawals 
 * Deposits
-* Single order
+* ~~Single order~~
 
 ### Web sockets
 

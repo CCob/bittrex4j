@@ -176,7 +176,7 @@ public class BittrexExchangeTest {
     @Test
     public void shouldReturnMarketOrderBook() throws IOException{
         setExpectationForJsonResultOnWebAPICall(loadTestResourceAsString("/MarketOrderBook.json"));
-        Response<OrdersResult> result = bittrexExchange.getMarketOrderBook("BTC-UBQ");
+        Response<MarketOrdersResult> result = bittrexExchange.getMarketOrderBook("BTC-UBQ");
 
         assertThat(result.isSuccess(), is(true));
         assertThat(result.getResult().getBuys().length, equalTo(757));
@@ -194,7 +194,7 @@ public class BittrexExchangeTest {
 
     @Test
     public void shouldReturnOrderHistory() throws IOException{
-        setExpectationForJsonResultOnWebAPICall(loadTestResourceAsString("/OrderHistory.json"));
+        setExpectationForJsonResultOnWebAPICall(loadTestResourceAsString("/MarketOrderHistory.json"));
         Response<CompletedOrder[]> result = bittrexExchange.getOrderHistory("ANY");
 
         assertThat(result.isSuccess(), is(true));
@@ -243,5 +243,14 @@ public class BittrexExchangeTest {
         Response<?> result = bittrexExchange.cancel("e606d53c-8d70-11e3-94b5-425861b86ab6");
 
         assertThat(result.isSuccess(), is(true));
+    }
+
+    @Test
+    public void shouldReturnOrder() throws IOException{
+        setExpectationForJsonResultOnWebAPICall(loadTestResourceAsString("/Order.json"));
+        Response<Order> result = bittrexExchange.getOrder("e606d53c-8d70-11e3-94b5-425861b86ab6");
+
+        assertThat(result.isSuccess(), is(true));
+        assertThat(result.getResult().getOrderUuid(), equalTo("e606d53c-8d70-11e3-94b5-425861b86ab6"));
     }
 }

@@ -14,22 +14,21 @@ package com.cobnet.bittrex4j.dao;
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
-public class OrdersResult {
-
-    private Order[] buys;
-    private Order[] sells;
+public class MarketOrder {
+    private double quantity;
+    private double rate;
 
     @JsonCreator
-    public OrdersResult(@JsonProperty("buy") Order[] buys, @JsonProperty("sell") Order[] sells) {
-        this.buys = buys;
-        this.sells = sells;
+    public MarketOrder(@JsonProperty("Quantity") double quantity, @JsonProperty("Rate") double rate) {
+        this.quantity = quantity;
+        this.rate = rate;
     }
 
-    public Order[] getBuys() {
-        return buys;
+    public double getQuantity() {
+        return quantity;
     }
 
-    public Order[] getSells() {
-        return sells;
+    public double getRate() {
+        return rate;
     }
 }

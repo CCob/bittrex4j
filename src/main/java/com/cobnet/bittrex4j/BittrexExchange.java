@@ -98,8 +98,8 @@ public class BittrexExchange  {
                 .withArgument("marketname",market));
     }
 
-    public Response<OrdersResult> getMarketOrderBook(String market) {
-        return getResponse(new TypeReference<Response<OrdersResult>>(){}, UrlBuilder.v2()
+    public Response<MarketOrdersResult> getMarketOrderBook(String market) {
+        return getResponse(new TypeReference<Response<MarketOrdersResult>>(){}, UrlBuilder.v2()
                 .withGroup(MARKET)
                 .withMethod("getmarketorderbook")
                 .withArgument("marketname",market));
@@ -157,6 +157,14 @@ public class BittrexExchange  {
                 .withGroup(ACCOUNT)
                 .withMethod("getbalance")
                 .withArgument("currency",currency));
+    }
+
+    public Response<Order> getOrder(String uuid) {
+        return getResponse(new TypeReference<Response<Order>>(){}, UrlBuilder.v1_1()
+                .withApiKey(apikey,secret)
+                .withGroup(ACCOUNT)
+                .withMethod("getorder")
+                .withArgument("uuid",uuid));
     }
 
     public Response<UuidResult> buyLimit(String market, double quantity, double rate){
