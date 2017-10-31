@@ -1,0 +1,13 @@
+{
+  "success" : true,
+  "message" : "",
+  "result" : {
+    "Currency" : "BTC",
+    "Balance" : 4.21549076,
+    "Available" : 4.21549076,
+    "Pending" : 0.00000000,
+    "CryptoAddress" : "1MacMr6715hjds342dXuLqXcju6fgwHA31",
+    "Requested" : false,
+    "Uuid" : null
+  }
+}

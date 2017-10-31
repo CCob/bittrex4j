@@ -1,0 +1,19 @@
+{
+  "success": true,
+  "message": "",
+  "result": {
+    "MarketName": "BTC-ETH",
+    "High": 0.05043478,
+    "Low": 0.0475,
+    "Volume": 46550.82855473,
+    "Last": 0.0481497,
+    "BaseVolume": 2288.63062113,
+    "TimeStamp": "2017-10-31T18:52:14.59",
+    "Bid": 0.0481497,
+    "Ask": 0.0483,
+    "OpenBuyOrders": 3246,
+    "OpenSellOrders": 19494,
+    "PrevDay": 0.04990217,
+    "Created": "2015-08-14T09:02:24.817"
+  }
+}

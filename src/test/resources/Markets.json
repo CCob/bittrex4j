@@ -1,0 +1,24 @@
+{
+"success" : true,
+"message" : "",
+"result" : [{
+"MarketCurrency" : "LTC",
+"BaseCurrency" : "BTC",
+"MarketCurrencyLong" : "Litecoin",
+"BaseCurrencyLong" : "Bitcoin",
+"MinTradeSize" : 0.01000000,
+"MarketName" : "BTC-LTC",
+"IsActive" : true,
+"Created" : "2014-02-13T00:00:00"
+}, {
+"MarketCurrency" : "DOGE",
+"BaseCurrency" : "BTC",
+"MarketCurrencyLong" : "Dogecoin",
+"BaseCurrencyLong" : "Bitcoin",
+"MinTradeSize" : 100.00000000,
+"MarketName" : "BTC-DOGE",
+"IsActive" : true,
+"Created" : "2014-02-13T00:00:00"
+}
+]
+}

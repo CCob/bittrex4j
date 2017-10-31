@@ -1,0 +1,22 @@
+{
+  "success" : true,
+  "message" : "",
+  "result" : [{
+    "Id": 43304731,
+    "TimeStamp": "2017-10-29T18:23:00.493",
+    "Quantity": 7.5765317,
+    "Price": 0.00082158,
+    "Total": 0.00622472,
+    "FillType": "FILL",
+    "OrderType": "BUY"
+  }, {
+    "Id": 43304732,
+    "TimeStamp": "2017-10-29T18:23:00.493",
+    "Quantity": 7.5765317,
+    "Price": 0.00082158,
+    "Total": 0.00622472,
+    "FillType": "FILL",
+    "OrderType": "SELL"
+  }
+  ]
+}

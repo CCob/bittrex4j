@@ -1,0 +1,32 @@
+/*
+ * *
+ *  This file is part of the bittrex4j project.
+ *
+ *  @author CCob
+ *
+ *  For the full copyright and license information, please view the LICENSE
+ *  file that was distributed with this source code.
+ * /
+ */
+
+apply plugin: 'java-library'
+
+repositories {
+
+    mavenCentral()
+    maven { url "https://clojars.org/repo" }
+}
+
+dependencies {
+
+    implementation "com.fasterxml.jackson.core:jackson-core:2.9.2"
+    implementation "com.fasterxml.jackson.core:jackson-annotations:2.9.2"
+    implementation "com.fasterxml.jackson.core:jackson-databind:2.9.2"
+    implementation "net.donky:donky-signalr:2.4.0.0"
+    implementation "org.slf4j:slf4j-api:1.7.25"
+    implementation "org.apache.httpcomponents:httpclient:4.5"
+
+    testImplementation "junit:junit:4.12"
+    testImplementation "org.mockito:mockito-all:1.10.19"
+}
+
