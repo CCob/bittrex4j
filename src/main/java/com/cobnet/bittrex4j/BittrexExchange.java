@@ -12,9 +12,12 @@
 package com.cobnet.bittrex4j;
 
 import com.cobnet.bittrex4j.dao.*;
+import com.cobnet.bittrex4j.listeners.UpdateExchangeStateListener;
+import com.cobnet.bittrex4j.listeners.UpdateSummaryStateListener;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.module.SimpleModule;
+import com.google.gson.Gson;
 import com.google.gson.internal.LinkedTreeMap;
 import donky.microsoft.aspnet.signalr.client.hubs.HubConnection;
 import donky.microsoft.aspnet.signalr.client.hubs.HubProxy;
@@ -41,6 +44,11 @@ public class BittrexExchange  {
     private HubConnection hubConnection;
     private HubProxy hubProxy;
     private HttpClientContext httpClientContext;
+    private Broker broker = new Broker();
+    private HttpFactory httpFactory;
+
+    private Observable<UpdateExchangeState> updateExchangeStateBroker = new Observable<>();
+    private Observable<ExchangeSummaryState> exchangeSummaryStateBroker = new Observable<>();
 
     public BittrexExchange() throws IOException {
         this(null,null);
@@ -54,6 +62,7 @@ public class BittrexExchange  {
 
         this.apikey = apikey;
         this.secret = secret;
+        this.httpFactory = httpFactory;
 
         mapper = new ObjectMapper(); // can reuse, share globally
         SimpleModule module = new SimpleModule();
@@ -64,28 +73,42 @@ public class BittrexExchange  {
         httpClientContext = httpFactory.createClientContext();
         HttpResponse response = httpClient.execute(new HttpGet("https://bittrex.com"),httpClientContext);
         log.info("Bittrex Cookies: " + httpClientContext.getCookieStore());
-
-        //connectToWebsocket();
-
     }
 
-    private void connectToWebsocket() {
+    public void onUpdateSummaryState(UpdateSummaryStateListener exchangeSummaryState){
+        exchangeSummaryStateBroker.addObserver(exchangeSummaryState);
+    }
 
-        hubConnection = new HubConnection("https://socket.bittrex.com",null,true,
+    public void onUpdateExchangeState(UpdateExchangeStateListener listener){
+        updateExchangeStateBroker.addObserver(listener);
+    }
+
+    private void  registerForEvent(String eventName, Class deltasType ){
+        hubProxy.on(eventName, deltas -> {
+            try {
+                //TODO: find better way to convert from Gson LinkedTreeMap to Jackson.
+                //This method is inefficient
+                Object deltasObj =
+                        mapper.readerFor(deltasType).readValue(new Gson().toJson(deltas));
+                broker.publish(deltasObj);
+            } catch (IOException e) {
+                log.error("Failed to parse updateSummaryState", e);
+            }
+        }, LinkedTreeMap.class);
+    }
+
+    public void connectToWebSocket(Runnable connectedHandler) {
+
+        hubConnection = httpFactory.createHubConnection("https://socket.bittrex.com",null,true,
                 new SignalRLoggerDecorator(log));
 
         hubProxy = hubConnection.createHubProxy("CoreHub");
+        hubConnection.connected(() -> hubProxy.invoke("subscribeToExchangeDeltas","BTC-UBQ"));
 
-        hubConnection.connected( () -> {
-            log.info("Connected");
-            //hubProxy.invoke("subscribeToExchangeDeltas","BTC-UBQ").done(result -> {
-            //    int bp = 0;
-            //});
-        });
+        //subscribeToDeltas(this);
 
-        hubProxy.on("updateExchangeState", exchangeState -> {
-
-        }, LinkedTreeMap.class);
+        registerForEvent("updateSummaryState", ExchangeSummaryState.class);
+        registerForEvent("updateExchangeState", UpdateExchangeState.class);
 
         hubConnection.error( er -> log.error("Error: " + er.toString()));
         hubConnection.start();

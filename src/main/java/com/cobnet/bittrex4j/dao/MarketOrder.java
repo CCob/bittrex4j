@@ -15,11 +15,18 @@ import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
 public class MarketOrder {
+    private int type;
     private double quantity;
     private double rate;
 
     @JsonCreator
     public MarketOrder(@JsonProperty("Quantity") double quantity, @JsonProperty("Rate") double rate) {
+        this.quantity = quantity;
+        this.rate = rate;
+    }
+
+    @JsonCreator
+    public MarketOrder(@JsonProperty("Type") int type, @JsonProperty("Quantity") double quantity, @JsonProperty("Rate") double rate) {
         this.quantity = quantity;
         this.rate = rate;
     }
@@ -30,5 +37,9 @@ public class MarketOrder {
 
     public double getRate() {
         return rate;
+    }
+
+    public int getType() {
+        return type;
     }
 }

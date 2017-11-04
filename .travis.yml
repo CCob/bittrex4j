@@ -10,4 +10,7 @@ cache:
 
 jdk:
   - oraclejdk8
-  - openjdk8	
+  - openjdk8
+
+after_success:
+- ./gradlew jacocoTestReport coveralls

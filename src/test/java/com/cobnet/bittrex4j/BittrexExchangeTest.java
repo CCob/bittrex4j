@@ -10,6 +10,12 @@
  */
 
 package com.cobnet.bittrex4j;import com.cobnet.bittrex4j.dao.*;
+
+import com.google.gson.Gson;
+import com.google.gson.internal.LinkedTreeMap;
+import donky.microsoft.aspnet.signalr.client.hubs.HubConnection;
+import donky.microsoft.aspnet.signalr.client.hubs.HubProxy;
+import donky.microsoft.aspnet.signalr.client.hubs.SubscriptionHandler1;
 import org.apache.http.HttpResponse;
 import org.apache.http.HttpStatus;
 import org.apache.http.ProtocolVersion;
@@ -23,6 +29,8 @@ import org.apache.http.message.BasicStatusLine;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
+import org.mockito.ArgumentCaptor;
+import org.mockito.Captor;
 import org.mockito.Mock;
 import org.mockito.runners.MockitoJUnitRunner;
 
@@ -33,9 +41,8 @@ import java.util.Scanner;
 import static org.hamcrest.CoreMatchers.equalTo;
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.MatcherAssert.assertThat;
-import static org.mockito.Matchers.any;
-import static org.mockito.Matchers.argThat;
-import static org.mockito.Matchers.eq;
+import static org.mockito.Matchers.*;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 @RunWith(MockitoJUnitRunner.class)
@@ -50,8 +57,18 @@ public class BittrexExchangeTest {
     HttpClientContext mockHttpClientContext;
 
     @Mock
-    private
-    HttpFactory mockHttpFactory;
+    private HubConnection mockHubConnection;
+
+    @Mock
+    private HubProxy mockHubProxy;
+
+    @Mock
+    private HttpFactory mockHttpFactory;
+
+    @Captor
+    private ArgumentCaptor<SubscriptionHandler1<LinkedTreeMap>> linkedTreeMapCaptor;
+
+
 
     private static final String NOT_FOUND = "Not Found";
     private static final String IO_ERROR = "IO Error";
@@ -79,14 +96,23 @@ public class BittrexExchangeTest {
     @Before
     public void setUp() throws IOException {
 
+        when(mockHubConnection.createHubProxy("CoreHub")).thenReturn(mockHubProxy);
+
         when(mockHttpClientContext.getCookieStore()).thenReturn(new BasicCookieStore());
         when(mockHttpClient.execute(argThat(UrlMatcher.matchesUrl("https://bittrex.com")),eq(mockHttpClientContext)))
                 .thenReturn(createResponse(HttpStatus.SC_OK,STATUS_OK_TEXT,"Bittrex"));
 
         when(mockHttpFactory.createClient()).thenReturn(mockHttpClient);
         when(mockHttpFactory.createClientContext()).thenReturn(mockHttpClientContext);
+        when(mockHttpFactory.createHubConnection(any(),any(),anyBoolean(),any())).thenReturn(mockHubConnection);
 
         bittrexExchange = new BittrexExchange("apikey","secret", mockHttpFactory);
+    }
+
+    private void setExpectationForHubConnectionSuccess(){
+        ArgumentCaptor<Runnable> runnableArgumentCaptor = ArgumentCaptor.forClass(Runnable.class);
+        verify(mockHubConnection).connected(runnableArgumentCaptor.capture());
+        runnableArgumentCaptor.getValue().run();
     }
 
     private void setExpectationForNon2xxErrorOnWebAPICall() throws IOException {
@@ -111,7 +137,7 @@ public class BittrexExchangeTest {
     @Test
     public void shouldReturnErrorResultOnNon2xxCode() throws IOException {
         setExpectationForNon2xxErrorOnWebAPICall();
-        Response result = bittrexExchange.getMarkets();
+        Response<Market[]> result = bittrexExchange.getMarkets();
 
         assertThat(result.isSuccess(), is(false));
         assertThat(result.getMessage(), equalTo(NOT_FOUND));
@@ -120,7 +146,7 @@ public class BittrexExchangeTest {
     @Test
     public void shouldReturnErrorResultOnException() throws IOException {
         setExpectationForExceptionOnWebAPICall();
-        Response result = bittrexExchange.getMarkets();
+        Response<Market[]> result = bittrexExchange.getMarkets();
 
         assertThat(result.isSuccess(), is(false));
         assertThat(result.getMessage(), equalTo(IO_ERROR));
@@ -227,9 +253,9 @@ public class BittrexExchangeTest {
     }
 
     @Test
-    public void shouldReturnOrderIdOnSellLimit() throws IOException{
+    public void shouldReturnOrderIdOnSellLimit() throws IOException {
         setExpectationForJsonResultOnWebAPICall(loadTestResourceAsString("/BuySellLimit.json"));
-        Response<UuidResult> result = bittrexExchange.sellLimit("BTC-ETH",1,0.5);
+        Response<UuidResult> result = bittrexExchange.sellLimit("BTC-ETH", 1, 0.5);
 
         assertThat(result.isSuccess(), is(true));
         assertThat(result.getResult().getUuid(), equalTo("e606d53c-8d70-11e3-94b5-425861b86ab6"));
@@ -251,4 +277,24 @@ public class BittrexExchangeTest {
         assertThat(result.isSuccess(), is(true));
         assertThat(result.getResult().getOrderUuid(), equalTo("e606d53c-8d70-11e3-94b5-425861b86ab6"));
     }
+
+    /*
+    @Test
+    public void websocket() throws IOException{
+
+        bittrexExchange.connectToWebSocket(() -> System.out.println("Connected"));
+        setExpectationForHubConnectionSuccess();
+
+        verify(mockHubProxy).on(eq("updateSummaryState"),linkedTreeMapCaptor.capture(),eq(LinkedTreeMap.class));
+
+
+        bittrexExchange.subscribeToDeltas();
+
+
+
+        linkedTreeMapCaptor.getValue().run(new Gson().fromJson(loadTestResourceAsString("/UpdateSummaryState.json"),LinkedTreeMap.class));
+
+        System.in.read();
+    }
+    */
 }

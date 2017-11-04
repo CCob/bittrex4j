@@ -1,0 +1,189 @@
+
+[
+  {
+    "MarketName": "BTC-WAVES",
+    "Nounce": 50140,
+    "Buys": [
+      {
+        "Type": 1,
+        "Rate": 0.00045031,
+        "Quantity": 0.0
+      },
+      {
+        "Type": 0,
+        "Rate": 0.00044993,
+        "Quantity": 28.72924964
+      },
+      {
+        "Type": 0,
+        "Rate": 0.00044134,
+        "Quantity": 493.96456811
+      },
+      {
+        "Type": 1,
+        "Rate": 0.00044064,
+        "Quantity": 0.0
+      },
+      {
+        "Type": 0,
+        "Rate": 0.00044063,
+        "Quantity": 208.81101127
+      }
+    ],
+    "Sells": [
+      {
+        "Type": 0,
+        "Rate": 0.00045348,
+        "Quantity": 32.43787321
+      },
+      {
+        "Type": 0,
+        "Rate": 0.00098711,
+        "Quantity": 2.07240368
+      },
+      {
+        "Type": 0,
+        "Rate": 0.00099773,
+        "Quantity": 2.53320577
+      },
+      {
+        "Type": 2,
+        "Rate": 0.00100758,
+        "Quantity": 29.27006295
+      },
+      {
+        "Type": 0,
+        "Rate": 0.00101305,
+        "Quantity": 2.57385726
+      },
+      {
+        "Type": 0,
+        "Rate": 0.00101728,
+        "Quantity": 2.02050391
+      },
+      {
+        "Type": 0,
+        "Rate": 0.00102805,
+        "Quantity": 3.04918162
+      },
+      {
+        "Type": 0,
+        "Rate": 0.00103428,
+        "Quantity": 3.25933235
+      },
+      {
+        "Type": 0,
+        "Rate": 0.00104002,
+        "Quantity": 2.21992657
+      },
+      {
+        "Type": 0,
+        "Rate": 0.00105041,
+        "Quantity": 3.04731291
+      },
+      {
+        "Type": 0,
+        "Rate": 0.00109089,
+        "Quantity": 3.07025367
+      },
+      {
+        "Type": 0,
+        "Rate": 0.00109457,
+        "Quantity": 3.25727592
+      },
+      {
+        "Type": 0,
+        "Rate": 0.00112618,
+        "Quantity": 2.04353472
+      },
+      {
+        "Type": 0,
+        "Rate": 0.00113297,
+        "Quantity": 1.89105397
+      },
+      {
+        "Type": 0,
+        "Rate": 0.00116872,
+        "Quantity": 2.63696791
+      },
+      {
+        "Type": 1,
+        "Rate": 0.00209002,
+        "Quantity": 0.0
+      },
+      {
+        "Type": 1,
+        "Rate": 0.00209123,
+        "Quantity": 0.0
+      },
+      {
+        "Type": 1,
+        "Rate": 0.00209200,
+        "Quantity": 0.0
+      },
+      {
+        "Type": 1,
+        "Rate": 0.00209211,
+        "Quantity": 0.0
+      },
+      {
+        "Type": 1,
+        "Rate": 0.00209249,
+        "Quantity": 0.0
+      },
+      {
+        "Type": 1,
+        "Rate": 0.00209550,
+        "Quantity": 0.0
+      },
+      {
+        "Type": 1,
+        "Rate": 0.00209749,
+        "Quantity": 0.0
+      },
+      {
+        "Type": 1,
+        "Rate": 0.00209800,
+        "Quantity": 0.0
+      },
+      {
+        "Type": 1,
+        "Rate": 0.00209970,
+        "Quantity": 0.0
+      },
+      {
+        "Type": 1,
+        "Rate": 0.00209996,
+        "Quantity": 0.0
+      },
+      {
+        "Type": 1,
+        "Rate": 0.00209997,
+        "Quantity": 0.0
+      },
+      {
+        "Type": 1,
+        "Rate": 0.00209999,
+        "Quantity": 0.0
+      },
+      {
+        "Type": 1,
+        "Rate": 0.00210000,
+        "Quantity": 0.0
+      },
+      {
+        "Type": 1,
+        "Rate": 0.00210015,
+        "Quantity": 0.0
+      }
+    ],
+    "Fills": [
+      {
+        "OrderType": "SELL",
+        "Rate": 1.7701E-4,
+        "Quantity": 366.72002732,
+        "TimeStamp": "2017-11-01T11:51:30.293"
+      }]
+  }
+]
+
