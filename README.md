@@ -1,4 +1,5 @@
-# bittrex4j ![Travis CI Status](https://travis-ci.org/CCob/bittrex4j.svg?branch=master)
+# bittrex4j ![Travis CI Status](https://travis-ci.org/CCob/bittrex4j.svg?branch=master) [![Coverage Status](https://coveralls.io/repos/github/CCob/bittrex4j/badge.svg?branch=master)](https://coveralls.io/github/CCob/bittrex4j?branch=master)
+
 Java library for accessing the Bittrex Web API's and Web Sockets.  It currently uses a mix of v1.1 and the undocumented v2 API.    
 
 ## TODO
