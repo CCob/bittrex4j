@@ -203,8 +203,8 @@ public class BittrexExchangeTest {
         Response<MarketOrdersResult> result = bittrexExchange.getMarketOrderBook("BTC-UBQ");
 
         assertThat(result.isSuccess(), is(true));
-        assertThat(result.getResult().getBuys().length, equalTo(757));
-        assertThat(result.getResult().getSells().length, equalTo(4454));
+        assertThat(result.getResult().getBuys().length, equalTo(3));
+        assertThat(result.getResult().getSells().length, equalTo(4));
     }
 
     @Test
