@@ -9,9 +9,9 @@
  * /
  */
 
-package com.cobnet.bittrex4j;import com.cobnet.bittrex4j.dao.*;
+package com.cobnet.bittrex4j;
 
-import com.google.gson.Gson;
+import com.cobnet.bittrex4j.dao.*;
 import com.google.gson.internal.LinkedTreeMap;
 import donky.microsoft.aspnet.signalr.client.hubs.HubConnection;
 import donky.microsoft.aspnet.signalr.client.hubs.HubProxy;
