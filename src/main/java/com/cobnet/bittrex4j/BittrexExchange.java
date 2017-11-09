@@ -237,12 +237,15 @@ public class BittrexExchange  {
             }
 
             request.addHeader("accept", "application/json");
+
+            log.debug("Executing HTTP request: {}",request.toString());
             HttpResponse httpResponse = httpClient.execute(request,httpClientContext);
 
             int responseCode = httpResponse.getStatusLine().getStatusCode();
             if(responseCode == 200) {
                 return mapper.readerFor(resultType).readValue(httpResponse.getEntity().getContent());
             }else{
+                log.warn("HTTP request failed with error code {} and reason {}",responseCode,httpResponse.getStatusLine().getReasonPhrase());
                 return new Response<>(false,httpResponse.getStatusLine().getReasonPhrase(),null);
             }
 
