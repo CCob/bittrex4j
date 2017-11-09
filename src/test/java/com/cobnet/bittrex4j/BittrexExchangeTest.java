@@ -281,6 +281,7 @@ public class BittrexExchangeTest {
         assertThat(result.getResult().getOrderUuid(), equalTo("e606d53c-8d70-11e3-94b5-425861b86ab6"));
     }
 
+    /*
 
     @Test
     public void shouldParseUpdateSummaryState() throws IOException{
@@ -296,6 +297,7 @@ public class BittrexExchangeTest {
 
         linkedTreeMapCaptor.getValue().run(new Gson().fromJson(loadTestResourceAsString("/UpdateSummaryState.json"),LinkedTreeMap.class));
     }
+    */
 
     /*
     @Test

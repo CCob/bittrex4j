@@ -18,7 +18,6 @@ import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.module.SimpleModule;
 import com.google.gson.Gson;
-import com.google.gson.internal.LinkedTreeMap;
 import donky.microsoft.aspnet.signalr.client.hubs.HubConnection;
 import donky.microsoft.aspnet.signalr.client.hubs.HubProxy;
 
@@ -30,6 +29,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
+import java.io.InputStreamReader;
 import java.time.ZonedDateTime;
 
 public class BittrexExchange  {
@@ -243,7 +243,7 @@ public class BittrexExchange  {
 
             int responseCode = httpResponse.getStatusLine().getStatusCode();
             if(responseCode == 200) {
-                return mapper.readerFor(resultType).readValue(httpResponse.getEntity().getContent());
+                return mapper.readerFor(resultType).readValue(new InputStreamReader(httpResponse.getEntity().getContent(),"UTF-8"));
             }else{
                 log.warn("HTTP request failed with error code {} and reason {}",responseCode,httpResponse.getStatusLine().getReasonPhrase());
                 return new Response<>(false,httpResponse.getStatusLine().getReasonPhrase(),null);
