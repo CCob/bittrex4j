@@ -44,7 +44,6 @@ public class BittrexExchange  {
     private HubConnection hubConnection;
     private HubProxy hubProxy;
     private HttpClientContext httpClientContext;
-    private Broker broker = new Broker();
     private HttpFactory httpFactory;
 
     private Observable<UpdateExchangeState> updateExchangeStateBroker = new Observable<>();
@@ -83,18 +82,18 @@ public class BittrexExchange  {
         updateExchangeStateBroker.addObserver(listener);
     }
 
-    private void  registerForEvent(String eventName, Class deltasType ){
+    private  void registerForEvent(String eventName, Class deltasType, Observable broker){
         hubProxy.on(eventName, deltas -> {
             try {
                 //TODO: find better way to convert from Gson LinkedTreeMap to Jackson.
                 //This method is inefficient
                 Object deltasObj =
                         mapper.readerFor(deltasType).readValue(new Gson().toJson(deltas));
-                broker.publish(deltasObj);
+                broker.notifyObservers(deltasObj);
             } catch (IOException e) {
                 log.error("Failed to parse updateSummaryState", e);
             }
-        }, LinkedTreeMap.class);
+        }, Object.class);
     }
 
     public void connectToWebSocket(Runnable connectedHandler) {
@@ -107,8 +106,8 @@ public class BittrexExchange  {
 
         //subscribeToDeltas(this);
 
-        registerForEvent("updateSummaryState", ExchangeSummaryState.class);
-        registerForEvent("updateExchangeState", UpdateExchangeState.class);
+        registerForEvent("updateSummaryState", ExchangeSummaryState.class,exchangeSummaryStateBroker);
+        registerForEvent("updateExchangeState", UpdateExchangeState.class,updateExchangeStateBroker);
 
         hubConnection.error( er -> log.error("Error: " + er.toString()));
         hubConnection.start();

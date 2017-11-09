@@ -24,4 +24,8 @@ public abstract class Deltas<DeltaType> {
     public DeltaType[] getDeltas() {
         return deltas;
     }
+
+    public long getNounce() {
+        return nounce;
+    }
 }
