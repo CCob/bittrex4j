@@ -14,6 +14,3 @@ jdk:
 
 after_success:
 - ./gradlew jacocoTestReport coveralls
-
-after_failure:
-- cat /home/travis/build/CCob/bittrex4j/build/reports/tests/test/index.html
