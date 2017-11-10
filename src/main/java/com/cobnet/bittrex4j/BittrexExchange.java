@@ -15,12 +15,12 @@ import com.cobnet.bittrex4j.dao.*;
 import com.cobnet.bittrex4j.listeners.UpdateExchangeStateListener;
 import com.cobnet.bittrex4j.listeners.UpdateSummaryStateListener;
 import com.fasterxml.jackson.core.type.TypeReference;
+import com.fasterxml.jackson.databind.JavaType;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.module.SimpleModule;
 import com.google.gson.Gson;
 import donky.microsoft.aspnet.signalr.client.hubs.HubConnection;
 import donky.microsoft.aspnet.signalr.client.hubs.HubProxy;
-
 import org.apache.http.HttpResponse;
 import org.apache.http.client.HttpClient;
 import org.apache.http.client.methods.HttpGet;
@@ -30,7 +30,10 @@ import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.io.InputStreamReader;
+import java.security.InvalidKeyException;
+import java.security.NoSuchAlgorithmException;
 import java.time.ZonedDateTime;
+import java.util.List;
 
 public class BittrexExchange  {
 
@@ -46,8 +49,11 @@ public class BittrexExchange  {
     private HttpClientContext httpClientContext;
     private HttpFactory httpFactory;
 
-    private Observable<UpdateExchangeState> updateExchangeStateBroker = new Observable<>();
+    private Observable<List<UpdateExchangeState>> updateExchangeStateBroker = new Observable<>();
     private Observable<ExchangeSummaryState> exchangeSummaryStateBroker = new Observable<>();
+
+    JavaType updateExchangeStateType;
+    JavaType exchangeSummaryStateType;
 
     public BittrexExchange() throws IOException {
         this(null,null);
@@ -68,10 +74,13 @@ public class BittrexExchange  {
         module.addDeserializer(ZonedDateTime.class, new DateTimeDeserializer());
         mapper.registerModule(module);
 
+        updateExchangeStateType = mapper.getTypeFactory().constructCollectionType(List.class,UpdateExchangeState.class);
+        exchangeSummaryStateType = mapper.getTypeFactory().constructType(ExchangeSummaryState.class);
+
         httpClient = httpFactory.createClient();
         httpClientContext = httpFactory.createClientContext();
-        HttpResponse response = httpClient.execute(new HttpGet("https://bittrex.com"),httpClientContext);
-        log.info("Bittrex Cookies: " + httpClientContext.getCookieStore());
+        httpClient.execute(new HttpGet("https://bittrex.com"),httpClientContext);
+        log.debug("Bittrex Cookies: " + httpClientContext.getCookieStore());
     }
 
     public void onUpdateSummaryState(UpdateSummaryStateListener exchangeSummaryState){
@@ -82,16 +91,13 @@ public class BittrexExchange  {
         updateExchangeStateBroker.addObserver(listener);
     }
 
-    private  void registerForEvent(String eventName, Class deltasType, Observable broker){
+    private  void registerForEvent(String eventName, JavaType deltasType, Observable broker){
         hubProxy.on(eventName, deltas -> {
             try {
-                //TODO: find better way to convert from Gson LinkedTreeMap to Jackson.
-                //This method is inefficient
-                Object deltasObj =
-                        mapper.readerFor(deltasType).readValue(new Gson().toJson(deltas));
-                broker.notifyObservers(deltasObj);
+                //TODO: find better way to convert from Gson LinkedTreeMap to Jackson.  This method is inefficient
+                broker.notifyObservers(mapper.readerFor(deltasType).readValue(new Gson().toJson(deltas)));
             } catch (IOException e) {
-                log.error("Failed to parse updateSummaryState", e);
+                log.error("Failed to parse response",e);
             }
         }, Object.class);
     }
@@ -103,11 +109,9 @@ public class BittrexExchange  {
 
         hubProxy = hubConnection.createHubProxy("CoreHub");
         hubConnection.connected(() -> hubProxy.invoke("subscribeToExchangeDeltas","BTC-UBQ"));
-
-        //subscribeToDeltas(this);
-
-        registerForEvent("updateSummaryState", ExchangeSummaryState.class,exchangeSummaryStateBroker);
-        registerForEvent("updateExchangeState", UpdateExchangeState.class,updateExchangeStateBroker);
+        
+        registerForEvent("updateSummaryState", exchangeSummaryStateType,exchangeSummaryStateBroker);
+        registerForEvent("updateExchangeState", updateExchangeStateType,updateExchangeStateBroker);
 
         hubConnection.error( er -> log.error("Error: " + er.toString()));
         hubConnection.start();
@@ -249,7 +253,7 @@ public class BittrexExchange  {
                 return new Response<>(false,httpResponse.getStatusLine().getReasonPhrase(),null);
             }
 
-        } catch (IOException e) {
+        } catch (NoSuchAlgorithmException | IOException | InvalidKeyException e) {
             return new Response<>(false,e.getMessage(),null);
         }
     }

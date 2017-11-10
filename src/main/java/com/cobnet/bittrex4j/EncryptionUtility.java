@@ -11,49 +11,32 @@
 
 package com.cobnet.bittrex4j;
 
-import java.io.UnsupportedEncodingException;
-import java.security.*;
-import java.util.Base64;
+import org.apache.commons.codec.binary.Hex;
 
 import javax.crypto.Mac;
 import javax.crypto.spec.SecretKeySpec;
-
-import org.apache.commons.codec.binary.Hex;
+import java.io.UnsupportedEncodingException;
+import java.security.InvalidKeyException;
+import java.security.NoSuchAlgorithmException;
+import java.security.SecureRandom;
+import java.util.Base64;
 
 class EncryptionUtility {
 
-    static String calculateHash(String secret, String url, String algorithm) {
-
-        try {
-            Mac shaHmac = Mac.getInstance(algorithm);
-            SecretKeySpec secretKey = new SecretKeySpec(secret.getBytes(), algorithm);
-            shaHmac.init(secretKey);
-            byte[] hash = shaHmac.doFinal(url.getBytes());
-            return Hex.encodeHexString(hash);
-
-        } catch (NoSuchAlgorithmException | InvalidKeyException e) {
-            e.printStackTrace();
-        }
-
-        return null;
+    static String calculateHash(String secret, String url, String algorithm) throws InvalidKeyException, NoSuchAlgorithmException {
+        Mac shaHmac = Mac.getInstance(algorithm);
+        SecretKeySpec secretKey = new SecretKeySpec(secret.getBytes(), algorithm);
+        shaHmac.init(secretKey);
+        byte[] hash = shaHmac.doFinal(url.getBytes());
+        return Hex.encodeHexString(hash);
     }
 
-    static String generateNonce() {
-
-        try {
-            SecureRandom random = SecureRandom.getInstance("SHA1PRNG");
-
-            random.setSeed(System.currentTimeMillis());
-            byte[] nonceBytes = new byte[16];
-            random.nextBytes(nonceBytes);
-
-            String nonce = new String(Base64.getEncoder().encode(nonceBytes), "UTF-8");
-            return nonce;
-
-        } catch (NoSuchAlgorithmException | UnsupportedEncodingException e) {
-            e.printStackTrace();
-        }
-
-        return null;
+    static String generateNonce() throws NoSuchAlgorithmException, UnsupportedEncodingException {
+        SecureRandom random = SecureRandom.getInstance("SHA1PRNG");
+        random.setSeed(System.currentTimeMillis());
+        byte[] nonceBytes = new byte[16];
+        random.nextBytes(nonceBytes);
+        String nonce = new String(Base64.getEncoder().encode(nonceBytes), "UTF-8");
+        return nonce;
     }
 }

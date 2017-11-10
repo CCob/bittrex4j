@@ -12,6 +12,7 @@
 package com.cobnet.bittrex4j.listeners;
 
 
+@FunctionalInterface
 public interface Listener<EventType> {
     void onEvent(EventType eventType);
 }

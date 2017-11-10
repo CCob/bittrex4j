@@ -73,7 +73,7 @@ public class UrlBuilder {
 
         if(isV2){
             if(isSecure()){
-                result += "/key";
+                throw new UnsupportedOperationException("v2 secure API currently not supported");
             }else{
                 result += "/pub";
             }

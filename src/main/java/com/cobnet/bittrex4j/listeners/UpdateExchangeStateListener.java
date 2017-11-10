@@ -13,6 +13,8 @@ package com.cobnet.bittrex4j.listeners;
 
 import com.cobnet.bittrex4j.dao.UpdateExchangeState;
 
-public interface UpdateExchangeStateListener extends Listener<UpdateExchangeState> {
-    void onEvent(UpdateExchangeState updateExchangeState);
+import java.util.List;
+
+public interface UpdateExchangeStateListener extends Listener<List<UpdateExchangeState>> {
+    void onEvent(List<UpdateExchangeState> updateExchangeState);
 }
