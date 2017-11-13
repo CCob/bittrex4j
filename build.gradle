@@ -13,6 +13,7 @@ plugins {
     id 'java-library'
     id 'maven'
     id 'jacoco'
+    id 'signing'
 }
 
 jacocoTestReport {
@@ -22,8 +23,9 @@ jacocoTestReport {
     }
 }
 
-group = 'com.cobnet'
+group = 'com.github.ccob'
 version = '0.0.1'
+archivesBaseName = "bittrex4j"
 
 repositories {
     mavenCentral()
@@ -46,6 +48,67 @@ dependencies {
     testCompile 'junit:junit:4.12'
     testCompile 'pl.pojo:pojo-tester:0.7.5'
     testCompile 'org.reflections:reflections:0.9.10'
+}
 
+task javadocJar(type: Jar) {
+    classifier = 'javadoc'
+    from javadoc
+}
+
+task sourcesJar(type: Jar) {
+    classifier = 'sources'
+    from sourceSets.main.allSource
+}
+
+artifacts {
+    archives javadocJar, sourcesJar
+}
+
+uploadArchives {
+    repositories {
+        mavenDeployer {
+            beforeDeployment { MavenDeployment deployment -> signing.signPom(deployment) }
+
+            repository(url: "https://oss.sonatype.org/service/local/staging/deploy/maven2/") {
+                authentication(userName: ossrhUsername, password: ossrhPassword)
+            }
+
+            snapshotRepository(url: "https://oss.sonatype.org/content/repositories/snapshots/") {
+                authentication(userName: ossrhUsername, password: ossrhPassword)
+            }
+
+            pom.project {
+                name 'Bittrex4j'
+                packaging 'jar'
+                description 'A java library for accessing the Bittrex Exchange Web API and Web Sockets.'
+                url 'https://github.com/CCob/bittrex4j'
+
+                scm {
+                    connection 'scm:git:https://github.com/CCob/bittrex4j.git'
+                    developerConnection 'scm:git:https://github.com/CCob/bittrex4j.git'
+                    url 'https://github.com/CCob/bittrex4j'
+                }
+
+                licenses {
+                    license {
+                        name 'GNU Lesser General Public License, Version 3.0'
+                        url 'https://www.gnu.org/licenses/lgpl-3.0-standalone.html'
+                    }
+                }
+
+                developers {
+                    developer {
+                        id 'CCob'
+                        name 'Ceri Coburn'
+                        email 'ceri.coburn@gmail.com'
+                    }
+                }
+            }
+        }
+    }
+}
+
+signing {
+    sign configurations.archives
 }
 
