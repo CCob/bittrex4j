@@ -24,7 +24,7 @@ jacocoTestReport {
 }
 
 group = 'com.github.ccob'
-version = '0.0.1'
+version = '0.0.1-SNAPSHOT'
 archivesBaseName = "bittrex4j"
 
 repositories {
@@ -64,51 +64,55 @@ artifacts {
     archives javadocJar, sourcesJar
 }
 
-uploadArchives {
-    repositories {
-        mavenDeployer {
-            beforeDeployment { MavenDeployment deployment -> signing.signPom(deployment) }
+if(project.findProperty("ossrhUsername") != null && project.findProperty("ossrhPassword") != null) {
+    uploadArchives {
+        repositories {
+            mavenDeployer {
+                beforeDeployment { MavenDeployment deployment -> signing.signPom(deployment) }
 
-            repository(url: "https://oss.sonatype.org/service/local/staging/deploy/maven2/") {
-                authentication(userName: ossrhUsername, password: ossrhPassword)
-            }
+                repository(url: "https://oss.sonatype.org/service/local/staging/deploy/maven2/") {
+                    authentication(userName: project.findProperty("ossrhUsername"), password: project.findProperty("ossrhPassword"))
+                }
 
-            snapshotRepository(url: "https://oss.sonatype.org/content/repositories/snapshots/") {
-                authentication(userName: ossrhUsername, password: ossrhPassword)
-            }
+                snapshotRepository(url: "https://oss.sonatype.org/content/repositories/snapshots/") {
+                    authentication(userName: project.findProperty("ossrhUsername"), password: project.findProperty("ossrhPassword"))
+                }
 
-            pom.project {
-                name 'Bittrex4j'
-                packaging 'jar'
-                description 'A java library for accessing the Bittrex Exchange Web API and Web Sockets.'
-                url 'https://github.com/CCob/bittrex4j'
-
-                scm {
-                    connection 'scm:git:https://github.com/CCob/bittrex4j.git'
-                    developerConnection 'scm:git:https://github.com/CCob/bittrex4j.git'
+                pom.project {
+                    name 'Bittrex4j'
+                    packaging 'jar'
+                    description 'A java library for accessing the Bittrex Exchange Web API and Web Sockets.'
                     url 'https://github.com/CCob/bittrex4j'
-                }
 
-                licenses {
-                    license {
-                        name 'GNU Lesser General Public License, Version 3.0'
-                        url 'https://www.gnu.org/licenses/lgpl-3.0-standalone.html'
+                    scm {
+                        connection 'scm:git:https://github.com/CCob/bittrex4j.git'
+                        developerConnection 'scm:git:https://github.com/CCob/bittrex4j.git'
+                        url 'https://github.com/CCob/bittrex4j'
                     }
-                }
 
-                developers {
-                    developer {
-                        id 'CCob'
-                        name 'Ceri Coburn'
-                        email 'ceri.coburn@gmail.com'
+                    licenses {
+                        license {
+                            name 'GNU Lesser General Public License, Version 3.0'
+                            url 'https://www.gnu.org/licenses/lgpl-3.0-standalone.html'
+                        }
+                    }
+
+                    developers {
+                        developer {
+                            id 'CCob'
+                            name 'Ceri Coburn'
+                            email 'ceri.coburn@gmail.com'
+                        }
                     }
                 }
             }
         }
     }
+
+    signing {
+        sign configurations.archives
+    }
 }
 
-signing {
-    sign configurations.archives
-}
+
 

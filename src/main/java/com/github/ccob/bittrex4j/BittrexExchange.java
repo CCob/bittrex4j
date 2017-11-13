@@ -91,6 +91,7 @@ public class BittrexExchange  {
         updateExchangeStateBroker.addObserver(listener);
     }
 
+    @SuppressWarnings("unchecked")
     private  void registerForEvent(String eventName, JavaType deltasType, Observable broker){
         hubProxy.on(eventName, deltas -> {
             try {
