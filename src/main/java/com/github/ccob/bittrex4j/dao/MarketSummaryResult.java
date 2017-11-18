@@ -18,14 +18,14 @@ public class MarketSummaryResult {
 
     Market market;
     MarketSummary summary;
-    Boolean isVerified;
+    Boolean verified;
 
     @JsonCreator
     public MarketSummaryResult(@JsonProperty("Market") Market market, @JsonProperty("Summary") MarketSummary summary,
                                @JsonProperty("IsVerified") Boolean isVerified) {
         this.market = market;
         this.summary = summary;
-        this.isVerified = isVerified;
+        this.verified = isVerified;
     }
 
     public Market getMarket() {
@@ -36,7 +36,7 @@ public class MarketSummaryResult {
         return summary;
     }
 
-    public Boolean getVerified() {
-        return isVerified;
+    public Boolean isVerified() {
+        return verified;
     }
 }
