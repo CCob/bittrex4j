@@ -152,6 +152,24 @@ public class BittrexExchangeTest {
     }
 
     @Test
+    public void shouldReturnTicks() throws IOException {
+        setExpectationForJsonResultOnWebAPICall(loadTestResourceAsString("/GetTicks.json"));
+        Response<Tick[]> result = bittrexExchange.getTicks("ANY", BittrexExchange.Interval.fiveMin);
+
+        assertThat(result.isSuccess(), is(true));
+        assertThat(result.getResult().length, equalTo(5));
+    }
+
+    @Test
+    public void shouldReturnLatestTick() throws IOException {
+        setExpectationForJsonResultOnWebAPICall(loadTestResourceAsString("/GetLatestTick.json"));
+        Response<Tick[]> result = bittrexExchange.getLatestTick("ANY", BittrexExchange.Interval.fiveMin);
+
+        assertThat(result.isSuccess(), is(true));
+        assertThat(result.getResult().length, equalTo(1));
+    }
+
+    @Test
     public void shouldReturnMarketHistory() throws IOException {
         setExpectationForJsonResultOnWebAPICall(loadTestResourceAsString("/MarketHistory.json"));
         Response<CompletedOrder[]> result = bittrexExchange.getMarketHistory("ANY");

@@ -38,6 +38,7 @@ public class DaoTests {
         classes.remove(Market.class);
         classes.remove(CompletedOrder.class);
         classes.remove(MarketSummaryResult.class);
+        classes.remove(Tick.class);
 
         return classes;
     }
