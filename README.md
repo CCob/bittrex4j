@@ -37,7 +37,7 @@ Then add the latest bittrex4j snapshot to your dependencies section:
 Once the API has had time to stabilise I will publish it to maven central
 ##Examples
 
-####Print Markets by Volume
+**Print Markets by Volume**
 
 ```java
 package com.github.ccob.bittrex4j.samples;
