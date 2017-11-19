@@ -1,19 +1,25 @@
 /*
- * *
+ *
  *  This file is part of the bittrex4j project.
  *
  *  @author CCob
  *
  *  For the full copyright and license information, please view the LICENSE
  *  file that was distributed with this source code.
- * /
  */
+
+buildscript {
+    dependencies {
+        classpath "gradle.plugin.synapticloop:documentr:2.9.0"
+    }
+}
 
 plugins {
     id 'java-library'
     id 'maven'
     id 'jacoco'
     id 'signing'
+    id 'synapticloop.documentr' version '2.9.0'
 }
 
 jacocoTestReport {
@@ -26,6 +32,12 @@ jacocoTestReport {
 group = 'com.github.ccob'
 version = '0.0.1-SNAPSHOT'
 archivesBaseName = "bittrex4j"
+description = "Java library for accessing the Bittrex Web API's and Web Sockets.  It currently uses a mix of v1.1 and the undocumented v2 API. "
+
+documentr {
+    verbose = 'false'
+    documentrFile = 'documentr.json' // perhaps you want to use a different JSON file?
+}
 
 repositories {
     mavenCentral()

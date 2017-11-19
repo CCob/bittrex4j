@@ -37,6 +37,14 @@ import java.util.List;
 
 public class BittrexExchange  {
 
+    public enum Interval{
+        oneMin,
+        fiveMin,
+        thirtyMin,
+        hour,
+        day
+    }
+
     private static Logger log = LoggerFactory.getLogger(BittrexExchange.class);
 
     private final String MARKET = "market", MARKETS = "markets", CURRENCY = "currency", CURRENCIES = "currencies", ACCOUNT = "account";
@@ -69,7 +77,7 @@ public class BittrexExchange  {
         this.secret = secret;
         this.httpFactory = httpFactory;
 
-        mapper = new ObjectMapper(); // can reuse, share globally
+        mapper = new ObjectMapper();
         SimpleModule module = new SimpleModule();
         module.addDeserializer(ZonedDateTime.class, new DateTimeDeserializer());
         mapper.registerModule(module);
@@ -116,6 +124,22 @@ public class BittrexExchange  {
 
         hubConnection.error( er -> log.error("Error: " + er.toString()));
         hubConnection.start();
+    }
+
+    public Response<Tick[]> getTicks(String market, Interval tickInterval){
+        return getResponse(new TypeReference<Response<Tick[]>>(){}, UrlBuilder.v2()
+                .withGroup(MARKET)
+                .withMethod("getticks")
+                .withArgument("marketname",market)
+                .withArgument("tickInterval",tickInterval.toString()));
+    }
+
+    public Response<Tick[]> getLatestTick(String market, Interval tickInterval){
+        return getResponse(new TypeReference<Response<Tick[]>>(){}, UrlBuilder.v2()
+                .withGroup(MARKET)
+                .withMethod("getlatesttick")
+                .withArgument("marketname",market)
+                .withArgument("tickInterval",tickInterval.toString()));
     }
 
     public Response<MarketSummary> getMarketSummary(String market) {
