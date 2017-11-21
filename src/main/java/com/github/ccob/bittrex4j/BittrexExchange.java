@@ -12,6 +12,7 @@
 package com.github.ccob.bittrex4j;
 
 import com.github.ccob.bittrex4j.dao.*;
+import com.github.ccob.bittrex4j.listeners.InvocationResult;
 import com.github.ccob.bittrex4j.listeners.UpdateSummaryStateListener;
 import com.github.ccob.bittrex4j.listeners.UpdateExchangeStateListener;
 import com.fasterxml.jackson.core.type.TypeReference;
@@ -111,13 +112,24 @@ public class BittrexExchange  {
         }, Object.class);
     }
 
+
+    public void subscribeToExchangeDeltas(String marketName, InvocationResult<? extends Object> invocationResult){
+        hubProxy.invoke("subscribeToExchangeDeltas",marketName).done( result -> invocationResult.success(null));
+    }
+
+    public void queryExchangeState(String marketName){
+        hubProxy.invoke("queryExchangeState",marketName).done( exchangeState -> {
+            int bp = 0;
+        });
+    }
+
     public void connectToWebSocket(Runnable connectedHandler) {
 
         hubConnection = httpFactory.createHubConnection("https://socket.bittrex.com",null,true,
                 new SignalRLoggerDecorator(log));
 
         hubProxy = hubConnection.createHubProxy("CoreHub");
-        hubConnection.connected(() -> hubProxy.invoke("subscribeToExchangeDeltas","BTC-UBQ"));
+        hubConnection.connected(connectedHandler);
         
         registerForEvent("updateSummaryState", exchangeSummaryStateType,exchangeSummaryStateBroker);
         registerForEvent("updateExchangeState", updateExchangeStateType,updateExchangeStateBroker);
