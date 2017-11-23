@@ -47,6 +47,7 @@ public class BittrexExchange  {
     }
 
     private static Logger log = LoggerFactory.getLogger(BittrexExchange.class);
+    private static Logger log_sockets = LoggerFactory.getLogger(BittrexExchange.class.getName().concat(".WebSockets"));
 
     private final String MARKET = "market", MARKETS = "markets", CURRENCY = "currency", CURRENCIES = "currencies", ACCOUNT = "account";
     private String apikey = "";
@@ -58,7 +59,7 @@ public class BittrexExchange  {
     private HttpClientContext httpClientContext;
     private HttpFactory httpFactory;
 
-    private Observable<List<UpdateExchangeState>> updateExchangeStateBroker = new Observable<>();
+    private Observable<UpdateExchangeState> updateExchangeStateBroker = new Observable<>();
     private Observable<ExchangeSummaryState> exchangeSummaryStateBroker = new Observable<>();
 
     JavaType updateExchangeStateType;
@@ -83,7 +84,7 @@ public class BittrexExchange  {
         module.addDeserializer(ZonedDateTime.class, new DateTimeDeserializer());
         mapper.registerModule(module);
 
-        updateExchangeStateType = mapper.getTypeFactory().constructCollectionType(List.class,UpdateExchangeState.class);
+        updateExchangeStateType = mapper.getTypeFactory().constructType(UpdateExchangeState.class);
         exchangeSummaryStateType = mapper.getTypeFactory().constructType(ExchangeSummaryState.class);
 
         httpClient = httpFactory.createClient();
@@ -114,7 +115,7 @@ public class BittrexExchange  {
 
 
     public void subscribeToExchangeDeltas(String marketName, InvocationResult<? extends Object> invocationResult){
-        hubProxy.invoke("subscribeToExchangeDeltas",marketName).done( result -> invocationResult.success(null));
+        hubProxy.invoke("subscribeToExchangeDeltas",marketName).done( result -> {if(invocationResult != null) invocationResult.success(null);});
     }
 
     public void queryExchangeState(String marketName){
@@ -126,7 +127,7 @@ public class BittrexExchange  {
     public void connectToWebSocket(Runnable connectedHandler) {
 
         hubConnection = httpFactory.createHubConnection("https://socket.bittrex.com",null,true,
-                new SignalRLoggerDecorator(log));
+                new SignalRLoggerDecorator(log_sockets));
 
         hubProxy = hubConnection.createHubProxy("CoreHub");
         hubConnection.connected(connectedHandler);

@@ -320,11 +320,10 @@ public class BittrexExchangeTest {
         verify(mockHubProxy).on(eq("updateExchangeState"), subscriptionHandlerArgumentCaptor.capture(), eq(Object.class));
 
         bittrexExchange.onUpdateExchangeState(updateExchangeState -> {
-            assertThat(updateExchangeState.size(), equalTo(1));
-            assertThat(updateExchangeState.get(0).getNounce(), equalTo(50140L));
-            assertThat(updateExchangeState.get(0).getBuys().length, equalTo(5));
-            assertThat(updateExchangeState.get(0).getSells().length, equalTo(29));
-            assertThat(updateExchangeState.get(0).getFills().length, equalTo(1));
+            assertThat(updateExchangeState.getNounce(), equalTo(50140L));
+            assertThat(updateExchangeState.getBuys().length, equalTo(5));
+            assertThat(updateExchangeState.getSells().length, equalTo(29));
+            assertThat(updateExchangeState.getFills().length, equalTo(1));
         });
 
         subscriptionHandlerArgumentCaptor.getValue().run(new Gson().fromJson(loadTestResourceAsString("/UpdateExchangeState.json"), Object.class));

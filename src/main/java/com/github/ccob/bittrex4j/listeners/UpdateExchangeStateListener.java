@@ -15,6 +15,6 @@ import com.github.ccob.bittrex4j.dao.UpdateExchangeState;
 
 import java.util.List;
 
-public interface UpdateExchangeStateListener extends Listener<List<UpdateExchangeState>> {
-    void onEvent(List<UpdateExchangeState> updateExchangeState);
+public interface UpdateExchangeStateListener extends Listener<UpdateExchangeState> {
+    void onEvent(UpdateExchangeState updateExchangeState);
 }

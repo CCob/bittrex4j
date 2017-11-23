@@ -8,6 +8,8 @@
         </encoder>
     </appender>
 
+    <logger name="com.github.ccob.bittrex4j.BittrexExchange.WebSockets" level="WARN"/>
+
     <root level="debug">
         <appender-ref ref="STDOUT" />
     </root>
