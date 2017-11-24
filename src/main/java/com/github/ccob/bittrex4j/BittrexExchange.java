@@ -11,14 +11,14 @@
 
 package com.github.ccob.bittrex4j;
 
-import com.github.ccob.bittrex4j.dao.*;
-import com.github.ccob.bittrex4j.listeners.InvocationResult;
-import com.github.ccob.bittrex4j.listeners.UpdateSummaryStateListener;
-import com.github.ccob.bittrex4j.listeners.UpdateExchangeStateListener;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.JavaType;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.module.SimpleModule;
+import com.github.ccob.bittrex4j.dao.*;
+import com.github.ccob.bittrex4j.listeners.InvocationResult;
+import com.github.ccob.bittrex4j.listeners.UpdateExchangeStateListener;
+import com.github.ccob.bittrex4j.listeners.UpdateSummaryStateListener;
 import com.google.gson.Gson;
 import donky.microsoft.aspnet.signalr.client.hubs.HubConnection;
 import donky.microsoft.aspnet.signalr.client.hubs.HubProxy;
@@ -34,7 +34,6 @@ import java.io.InputStreamReader;
 import java.security.InvalidKeyException;
 import java.security.NoSuchAlgorithmException;
 import java.time.ZonedDateTime;
-import java.util.List;
 
 public class BittrexExchange  {
 
@@ -93,6 +92,12 @@ public class BittrexExchange  {
         log.debug("Bittrex Cookies: " + httpClientContext.getCookieStore());
     }
 
+    @Override
+    protected void finalize() throws Throwable {
+        disconnectFromWebSocket();
+        super.finalize();
+    }
+
     public void onUpdateSummaryState(UpdateSummaryStateListener exchangeSummaryState){
         exchangeSummaryStateBroker.addObserver(exchangeSummaryState);
     }
@@ -122,6 +127,10 @@ public class BittrexExchange  {
         hubProxy.invoke("queryExchangeState",marketName).done( exchangeState -> {
             int bp = 0;
         });
+    }
+
+    public void disconnectFromWebSocket(){
+        hubConnection.stop();
     }
 
     public void connectToWebSocket(Runnable connectedHandler) {

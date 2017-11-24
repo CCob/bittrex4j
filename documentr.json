@@ -10,9 +10,15 @@
     { "type":"file", "value":"docs/latest-release.md" },
 
     { "type":"markdown", "value":"##Examples\n\n"},
-    { "type":"markdown", "value":"**Print Markets by Volume**\n\n"},
+
+    { "type":"markdown", "value":"**Print Markets by Volume (REST API)**\n\n"},
     { "type":"markdown", "value":"```java\n" },
     { "type":"file", "value":"src/test/java/com/github/ccob/bittrex4j/samples/PrintMarketsByVolume.java"},
+    { "type":"markdown", "value":"\n```\n" },
+
+    { "type":"markdown", "value":"**Show Realtime Fills(WebSocket API)**\n\n"},
+    { "type":"markdown", "value":"```java\n" },
+    { "type":"file", "value":"src/test/java/com/github/ccob/bittrex4j/samples/ShowRealTimeFills.java"},
     { "type":"markdown", "value":"\n```\n" },
 
     { "type":"file", "value":"docs/todo.md"},

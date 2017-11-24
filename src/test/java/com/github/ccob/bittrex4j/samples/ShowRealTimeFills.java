@@ -6,9 +6,11 @@ import com.github.ccob.bittrex4j.dao.Fill;
 import java.io.IOException;
 import java.util.Arrays;
 
-public class SubscribeToExchange {
+public class ShowRealTimeFills {
 
     public static void main(String[] args) throws IOException {
+
+        System.out.println("Press any key to quit");
 
         BittrexExchange bittrexExchange = new BittrexExchange();
 
@@ -24,10 +26,11 @@ public class SubscribeToExchange {
         });
 
         bittrexExchange.connectToWebSocket( () -> {
-            bittrexExchange.subscribeToExchangeDeltas("BTC-ETH",null);
+            bittrexExchange.subscribeToExchangeDeltas("BTC-ETH", null);
             bittrexExchange.subscribeToExchangeDeltas("BTC-BCC",null);
         });
 
         System.in.read();
+        bittrexExchange.disconnectFromWebSocket();
     }
 }
