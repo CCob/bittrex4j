@@ -53,6 +53,7 @@ dependencies {
     compile "net.donky:donky-signalr:2.4.0.0"
     compile "org.slf4j:slf4j-api:1.7.25"
     compile "org.apache.httpcomponents:httpclient:4.5"
+    compile "com.google.code.gson:gson:2.8.2"
 
     testCompile 'ch.qos.logback:logback-classic:1.2.3'
     testCompile 'org.hamcrest:hamcrest-all:1.3'

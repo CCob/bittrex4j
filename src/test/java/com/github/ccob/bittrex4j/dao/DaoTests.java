@@ -39,6 +39,7 @@ public class DaoTests {
         classes.remove(CompletedOrder.class);
         classes.remove(MarketSummaryResult.class);
         classes.remove(Tick.class);
+        classes.remove(WithdrawalDeposit.class);
 
         return classes;
     }

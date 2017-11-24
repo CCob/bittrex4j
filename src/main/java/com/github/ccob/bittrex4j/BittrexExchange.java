@@ -240,6 +240,30 @@ public class BittrexExchange  {
                 .withArgument("uuid",uuid));
     }
 
+    public Response<DepositAddress> getDepositAddress(String currency) {
+        return getResponse(new TypeReference<Response<DepositAddress>>(){}, UrlBuilder.v1_1()
+                .withApiKey(apikey,secret)
+                .withGroup(ACCOUNT)
+                .withMethod("getdepositaddress")
+                .withArgument("currency",currency));
+    }
+
+    public Response<WithdrawalDeposit[]> getWithdrawalHistory(String currency) {
+        return getResponse(new TypeReference<Response<WithdrawalDeposit[]>>(){}, UrlBuilder.v1_1()
+                .withApiKey(apikey,secret)
+                .withGroup(ACCOUNT)
+                .withMethod("getwithdrawalhistory")
+                .withArgument("currency",currency));
+    }
+
+    public Response<WithdrawalDeposit[]> getDepositHistory(String currency) {
+        return getResponse(new TypeReference<Response<WithdrawalDeposit[]>>(){}, UrlBuilder.v1_1()
+                .withApiKey(apikey,secret)
+                .withGroup(ACCOUNT)
+                .withMethod("getdeposithistory")
+                .withArgument("currency",currency));
+    }
+
     public Response<UuidResult> buyLimit(String market, double quantity, double rate){
         return getResponse(new TypeReference<Response<UuidResult>>(){}, UrlBuilder.v1_1()
                 .withApiKey(apikey,secret)

@@ -279,6 +279,34 @@ public class BittrexExchangeTest {
     }
 
     @Test
+    public void shouldReturnDepositAddress() throws IOException {
+        setExpectationForJsonResultOnWebAPICall(loadTestResourceAsString("/DepositAddress.json"));
+        Response<DepositAddress> result = bittrexExchange.getDepositAddress("BTC");
+
+        assertThat(result.isSuccess(), is(true));
+        assertThat(result.getResult().getCurrency(), equalTo("VTC"));
+        assertThat(result.getResult().getAddress(), equalTo("Vy5SKeKGXUHKS2WVpJ76HYuKAu3URastUo"));
+    }
+
+    @Test
+    public void shouldReturnWithdrawalHistory() throws IOException{
+        setExpectationForJsonResultOnWebAPICall(loadTestResourceAsString("/WithdrawalHistory.json"));
+        Response<WithdrawalDeposit[]> result = bittrexExchange.getWithdrawalHistory("BTC");
+
+        assertThat(result.isSuccess(), is(true));
+        assertThat(result.getResult().length, equalTo(2));
+    }
+
+    @Test
+    public void shouldReturnDepositHistory() throws IOException{
+        setExpectationForJsonResultOnWebAPICall(loadTestResourceAsString("/DepositHistory.json"));
+        Response<WithdrawalDeposit[]> result = bittrexExchange.getDepositHistory("BTC");
+
+        assertThat(result.isSuccess(), is(true));
+        assertThat(result.getResult().length, equalTo(2));
+    }
+
+    @Test
     public void shouldReturnTrueOnCancel() throws IOException{
         setExpectationForJsonResultOnWebAPICall(loadTestResourceAsString("/Cancel.json"));
         Response<?> result = bittrexExchange.cancel("e606d53c-8d70-11e3-94b5-425861b86ab6");
