@@ -32,7 +32,6 @@ jacocoTestReport {
 }
 
 group = 'com.github.ccob'
-version = '1.0.0-SNAPSHOT'
 archivesBaseName = "bittrex4j"
 description = "Java library for accessing the Bittrex Web API's and Web Sockets.  It currently uses a mix of v1.1 and the undocumented v2 API. "
 
@@ -126,6 +125,25 @@ if(project.findProperty("ossrhUsername") != null && project.findProperty("ossrhP
 
     signing {
         sign configurations.archives
+    }
+
+    release {
+        failOnCommitNeeded = true
+        failOnPublishNeeded = true
+        failOnSnapshotDependencies = true
+        failOnUnversionedFiles = true
+        failOnUpdateNeeded = true
+        revertOnFail = true
+        preCommitText = ''
+        preTagCommitMessage = '[Gradle Release Plugin] - pre tag commit: '
+        tagCommitMessage = '[Gradle Release Plugin] - creating tag : '
+        newVersionCommitMessage = '[Gradle Release Plugin] - new version commit: '
+        tagTemplate = '${version}'
+        // May decide to add additional custom tasks here
+        buildTasks = ['uploadArchives']
+        scmAdapters = [
+                net.researchgate.release.GitAdapter
+        ]
     }
 }
 
