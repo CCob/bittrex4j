@@ -21,7 +21,11 @@
     { "type":"file", "value":"src/test/java/com/github/ccob/bittrex4j/samples/ShowRealTimeFills.java"},
     { "type":"markdown", "value":"\n```\n" },
 
-    { "type":"file", "value":"docs/todo.md"},
+    { "type":"markdown", "value":"**Show Deposit History for BTC (Authenticated REST API)**\n\n"},
+    { "type":"markdown", "value":"```java\n" },
+    { "type":"file", "value":"src/test/java/com/github/ccob/bittrex4j/samples/PrintDepositHistory.java"},
+    { "type":"markdown", "value":"\n```\n" },
+
     { "type":"file", "value":"docs/footer.md" }
   ]
 }

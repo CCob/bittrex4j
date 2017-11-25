@@ -89,6 +89,8 @@ public class ShowRealTimeFills {
 
     public static void main(String[] args) throws IOException {
 
+        System.out.println("Press any key to quit");
+
         BittrexExchange bittrexExchange = new BittrexExchange();
 
         bittrexExchange.onUpdateExchangeState(updateExchangeState -> {
@@ -108,16 +110,46 @@ public class ShowRealTimeFills {
         });
 
         System.in.read();
+        bittrexExchange.disconnectFromWebSocket();
     }
 }
 ```
+**Show Deposit History for BTC (Authenticated REST API)**
 
-## TODO
+```java
+package com.github.ccob.bittrex4j.samples;
 
-### Missing APIs
+import com.github.ccob.bittrex4j.BittrexExchange;
+import com.github.ccob.bittrex4j.dao.Response;
+import com.github.ccob.bittrex4j.dao.WithdrawalDeposit;
 
-* Withdrawals 
-* Deposits
+import java.io.IOException;
+import java.util.Arrays;
+
+public class PrintDepositHistory {
+
+    /* Replace apikey and secret values below */
+    private static final String apikey = "*";
+    private static final String secret = "*";
+
+    public static void main(String[] args) throws IOException {
+
+        BittrexExchange bittrexExchange = new BittrexExchange(apikey,secret);
+
+        Response<WithdrawalDeposit[]> markets = bittrexExchange.getDepositHistory("BTC");
+
+        if(!markets.isSuccess()){
+            System.out.println("Failed to fetch deposit history with error " + markets.getMessage());
+        }
+
+        Arrays.stream(markets.getResult())
+                .forEach(deposit -> System.out.println(String.format("Address %s, Amount %02f",deposit.getAddress(),deposit.getAmount())));
+
+    }
+}
+
+```
+
 ## Thanks
 
 Thanks to platelminto for the java-bittrex project and dparlevliet for the node.bittrex.api where both have been used for inspiration.

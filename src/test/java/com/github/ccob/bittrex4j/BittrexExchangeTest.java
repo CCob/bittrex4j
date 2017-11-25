@@ -307,6 +307,15 @@ public class BittrexExchangeTest {
     }
 
     @Test
+    public void shouldReturnIdOnWithdrawal() throws IOException{
+        setExpectationForJsonResultOnWebAPICall(loadTestResourceAsString("/Withdrawal.json"));
+        Response<UuidResult> result = bittrexExchange.withdraw("currency",1.0,"address");
+
+        assertThat(result.isSuccess(), is(true));
+        assertThat(result.getResult().getUuid(), equalTo("68b5a16c-92de-11e3-ba3b-425861b86ab6"));
+    }
+
+    @Test
     public void shouldReturnTrueOnCancel() throws IOException{
         setExpectationForJsonResultOnWebAPICall(loadTestResourceAsString("/Cancel.json"));
         Response<?> result = bittrexExchange.cancel("e606d53c-8d70-11e3-94b5-425861b86ab6");

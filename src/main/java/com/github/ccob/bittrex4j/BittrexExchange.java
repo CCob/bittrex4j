@@ -31,6 +31,7 @@ import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.io.InputStreamReader;
+import java.math.BigDecimal;
 import java.security.InvalidKeyException;
 import java.security.NoSuchAlgorithmException;
 import java.time.ZonedDateTime;
@@ -263,6 +264,17 @@ public class BittrexExchange  {
                 .withMethod("getdeposithistory")
                 .withArgument("currency",currency));
     }
+
+    public Response<UuidResult> withdraw(String currency, double quantity, String address) {
+        return getResponse(new TypeReference<Response<UuidResult>>(){}, UrlBuilder.v1_1()
+                .withApiKey(apikey,secret)
+                .withGroup(ACCOUNT)
+                .withMethod("withdraw")
+                .withArgument("currency",currency)
+                .withArgument("quantity", BigDecimal.valueOf(quantity).toString())
+                .withArgument("address",address));
+    }
+
 
     public Response<UuidResult> buyLimit(String market, double quantity, double rate){
         return getResponse(new TypeReference<Response<UuidResult>>(){}, UrlBuilder.v1_1()
