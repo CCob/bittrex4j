@@ -11,13 +11,14 @@
 
 package com.github.ccob.bittrex4j;
 
-import com.github.ccob.bittrex4j.dao.*;
-import com.github.ccob.bittrex4j.listeners.UpdateSummaryStateListener;
-import com.github.ccob.bittrex4j.listeners.UpdateExchangeStateListener;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.JavaType;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.module.SimpleModule;
+import com.github.ccob.bittrex4j.dao.*;
+import com.github.ccob.bittrex4j.listeners.InvocationResult;
+import com.github.ccob.bittrex4j.listeners.UpdateExchangeStateListener;
+import com.github.ccob.bittrex4j.listeners.UpdateSummaryStateListener;
 import com.google.gson.Gson;
 import donky.microsoft.aspnet.signalr.client.hubs.HubConnection;
 import donky.microsoft.aspnet.signalr.client.hubs.HubProxy;
@@ -30,10 +31,10 @@ import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.io.InputStreamReader;
+import java.math.BigDecimal;
 import java.security.InvalidKeyException;
 import java.security.NoSuchAlgorithmException;
 import java.time.ZonedDateTime;
-import java.util.List;
 
 public class BittrexExchange  {
 
@@ -46,6 +47,7 @@ public class BittrexExchange  {
     }
 
     private static Logger log = LoggerFactory.getLogger(BittrexExchange.class);
+    private static Logger log_sockets = LoggerFactory.getLogger(BittrexExchange.class.getName().concat(".WebSockets"));
 
     private final String MARKET = "market", MARKETS = "markets", CURRENCY = "currency", CURRENCIES = "currencies", ACCOUNT = "account";
     private String apikey = "";
@@ -57,7 +59,7 @@ public class BittrexExchange  {
     private HttpClientContext httpClientContext;
     private HttpFactory httpFactory;
 
-    private Observable<List<UpdateExchangeState>> updateExchangeStateBroker = new Observable<>();
+    private Observable<UpdateExchangeState> updateExchangeStateBroker = new Observable<>();
     private Observable<ExchangeSummaryState> exchangeSummaryStateBroker = new Observable<>();
 
     JavaType updateExchangeStateType;
@@ -82,13 +84,19 @@ public class BittrexExchange  {
         module.addDeserializer(ZonedDateTime.class, new DateTimeDeserializer());
         mapper.registerModule(module);
 
-        updateExchangeStateType = mapper.getTypeFactory().constructCollectionType(List.class,UpdateExchangeState.class);
+        updateExchangeStateType = mapper.getTypeFactory().constructType(UpdateExchangeState.class);
         exchangeSummaryStateType = mapper.getTypeFactory().constructType(ExchangeSummaryState.class);
 
         httpClient = httpFactory.createClient();
         httpClientContext = httpFactory.createClientContext();
         httpClient.execute(new HttpGet("https://bittrex.com"),httpClientContext);
         log.debug("Bittrex Cookies: " + httpClientContext.getCookieStore());
+    }
+
+    @Override
+    protected void finalize() throws Throwable {
+        disconnectFromWebSocket();
+        super.finalize();
     }
 
     public void onUpdateSummaryState(UpdateSummaryStateListener exchangeSummaryState){
@@ -111,13 +119,28 @@ public class BittrexExchange  {
         }, Object.class);
     }
 
+
+    public void subscribeToExchangeDeltas(String marketName, InvocationResult<? extends Object> invocationResult){
+        hubProxy.invoke("subscribeToExchangeDeltas",marketName).done( result -> {if(invocationResult != null) invocationResult.success(null);});
+    }
+
+    public void queryExchangeState(String marketName){
+        hubProxy.invoke("queryExchangeState",marketName).done( exchangeState -> {
+            int bp = 0;
+        });
+    }
+
+    public void disconnectFromWebSocket(){
+        hubConnection.stop();
+    }
+
     public void connectToWebSocket(Runnable connectedHandler) {
 
         hubConnection = httpFactory.createHubConnection("https://socket.bittrex.com",null,true,
-                new SignalRLoggerDecorator(log));
+                new SignalRLoggerDecorator(log_sockets));
 
         hubProxy = hubConnection.createHubProxy("CoreHub");
-        hubConnection.connected(() -> hubProxy.invoke("subscribeToExchangeDeltas","BTC-UBQ"));
+        hubConnection.connected(connectedHandler);
         
         registerForEvent("updateSummaryState", exchangeSummaryStateType,exchangeSummaryStateBroker);
         registerForEvent("updateExchangeState", updateExchangeStateType,updateExchangeStateBroker);
@@ -217,6 +240,41 @@ public class BittrexExchange  {
                 .withMethod("getorder")
                 .withArgument("uuid",uuid));
     }
+
+    public Response<DepositAddress> getDepositAddress(String currency) {
+        return getResponse(new TypeReference<Response<DepositAddress>>(){}, UrlBuilder.v1_1()
+                .withApiKey(apikey,secret)
+                .withGroup(ACCOUNT)
+                .withMethod("getdepositaddress")
+                .withArgument("currency",currency));
+    }
+
+    public Response<WithdrawalDeposit[]> getWithdrawalHistory(String currency) {
+        return getResponse(new TypeReference<Response<WithdrawalDeposit[]>>(){}, UrlBuilder.v1_1()
+                .withApiKey(apikey,secret)
+                .withGroup(ACCOUNT)
+                .withMethod("getwithdrawalhistory")
+                .withArgument("currency",currency));
+    }
+
+    public Response<WithdrawalDeposit[]> getDepositHistory(String currency) {
+        return getResponse(new TypeReference<Response<WithdrawalDeposit[]>>(){}, UrlBuilder.v1_1()
+                .withApiKey(apikey,secret)
+                .withGroup(ACCOUNT)
+                .withMethod("getdeposithistory")
+                .withArgument("currency",currency));
+    }
+
+    public Response<UuidResult> withdraw(String currency, double quantity, String address) {
+        return getResponse(new TypeReference<Response<UuidResult>>(){}, UrlBuilder.v1_1()
+                .withApiKey(apikey,secret)
+                .withGroup(ACCOUNT)
+                .withMethod("withdraw")
+                .withArgument("currency",currency)
+                .withArgument("quantity", BigDecimal.valueOf(quantity).toString())
+                .withArgument("address",address));
+    }
+
 
     public Response<UuidResult> buyLimit(String market, double quantity, double rate){
         return getResponse(new TypeReference<Response<UuidResult>>(){}, UrlBuilder.v1_1()

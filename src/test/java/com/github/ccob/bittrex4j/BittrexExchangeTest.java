@@ -279,6 +279,43 @@ public class BittrexExchangeTest {
     }
 
     @Test
+    public void shouldReturnDepositAddress() throws IOException {
+        setExpectationForJsonResultOnWebAPICall(loadTestResourceAsString("/DepositAddress.json"));
+        Response<DepositAddress> result = bittrexExchange.getDepositAddress("BTC");
+
+        assertThat(result.isSuccess(), is(true));
+        assertThat(result.getResult().getCurrency(), equalTo("VTC"));
+        assertThat(result.getResult().getAddress(), equalTo("Vy5SKeKGXUHKS2WVpJ76HYuKAu3URastUo"));
+    }
+
+    @Test
+    public void shouldReturnWithdrawalHistory() throws IOException{
+        setExpectationForJsonResultOnWebAPICall(loadTestResourceAsString("/WithdrawalHistory.json"));
+        Response<WithdrawalDeposit[]> result = bittrexExchange.getWithdrawalHistory("BTC");
+
+        assertThat(result.isSuccess(), is(true));
+        assertThat(result.getResult().length, equalTo(2));
+    }
+
+    @Test
+    public void shouldReturnDepositHistory() throws IOException{
+        setExpectationForJsonResultOnWebAPICall(loadTestResourceAsString("/DepositHistory.json"));
+        Response<WithdrawalDeposit[]> result = bittrexExchange.getDepositHistory("BTC");
+
+        assertThat(result.isSuccess(), is(true));
+        assertThat(result.getResult().length, equalTo(2));
+    }
+
+    @Test
+    public void shouldReturnIdOnWithdrawal() throws IOException{
+        setExpectationForJsonResultOnWebAPICall(loadTestResourceAsString("/Withdrawal.json"));
+        Response<UuidResult> result = bittrexExchange.withdraw("currency",1.0,"address");
+
+        assertThat(result.isSuccess(), is(true));
+        assertThat(result.getResult().getUuid(), equalTo("68b5a16c-92de-11e3-ba3b-425861b86ab6"));
+    }
+
+    @Test
     public void shouldReturnTrueOnCancel() throws IOException{
         setExpectationForJsonResultOnWebAPICall(loadTestResourceAsString("/Cancel.json"));
         Response<?> result = bittrexExchange.cancel("e606d53c-8d70-11e3-94b5-425861b86ab6");
@@ -320,11 +357,10 @@ public class BittrexExchangeTest {
         verify(mockHubProxy).on(eq("updateExchangeState"), subscriptionHandlerArgumentCaptor.capture(), eq(Object.class));
 
         bittrexExchange.onUpdateExchangeState(updateExchangeState -> {
-            assertThat(updateExchangeState.size(), equalTo(1));
-            assertThat(updateExchangeState.get(0).getNounce(), equalTo(50140L));
-            assertThat(updateExchangeState.get(0).getBuys().length, equalTo(5));
-            assertThat(updateExchangeState.get(0).getSells().length, equalTo(29));
-            assertThat(updateExchangeState.get(0).getFills().length, equalTo(1));
+            assertThat(updateExchangeState.getNounce(), equalTo(50140L));
+            assertThat(updateExchangeState.getBuys().length, equalTo(5));
+            assertThat(updateExchangeState.getSells().length, equalTo(29));
+            assertThat(updateExchangeState.getFills().length, equalTo(1));
         });
 
         subscriptionHandlerArgumentCaptor.getValue().run(new Gson().fromJson(loadTestResourceAsString("/UpdateExchangeState.json"), Object.class));
