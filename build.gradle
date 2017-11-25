@@ -11,6 +11,7 @@
 buildscript {
     dependencies {
         classpath "gradle.plugin.synapticloop:documentr:2.9.0"
+        classpath 'net.researchgate:gradle-release:2.6.0'
     }
 }
 
@@ -20,6 +21,7 @@ plugins {
     id 'jacoco'
     id 'signing'
     id 'synapticloop.documentr' version '2.9.0'
+    id 'net.researchgate.release' version '2.6.0'
 }
 
 jacocoTestReport {
@@ -30,7 +32,7 @@ jacocoTestReport {
 }
 
 group = 'com.github.ccob'
-version = '0.0.1-SNAPSHOT'
+version = '1.0.0-SNAPSHOT'
 archivesBaseName = "bittrex4j"
 description = "Java library for accessing the Bittrex Web API's and Web Sockets.  It currently uses a mix of v1.1 and the undocumented v2 API. "
 
