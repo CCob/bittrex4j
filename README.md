@@ -2,6 +2,8 @@
 
 # bittrex4j
 
+
+![bittrex4j Logo](docs/bittrex4j.png)  
 ![Travis CI Status](https://travis-ci.org/CCob/bittrex4j.svg?branch=master) [![codecov](https://codecov.io/gh/CCob/bittrex4j/branch/master/graph/badge.svg)](https://codecov.io/gh/CCob/bittrex4j)
 
 
