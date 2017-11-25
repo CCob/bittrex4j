@@ -9,11 +9,15 @@ import java.util.Arrays;
 
 public class PrintDepositHistory {
 
+    /* Replace apikey and secret values below */
+    private static final String apikey = "*";
+    private static final String secret = "*";
+
     public static void main(String[] args) throws IOException {
 
-        BittrexExchange bittrexExchange = new BittrexExchange("*","*");
+        BittrexExchange bittrexExchange = new BittrexExchange(apikey,secret);
 
-        Response<WithdrawalDeposit[]> markets = bittrexExchange.getDepositHistory("UBQ");
+        Response<WithdrawalDeposit[]> markets = bittrexExchange.getDepositHistory("BTC");
 
         if(!markets.isSuccess()){
             System.out.println("Failed to fetch deposit history with error " + markets.getMessage());
