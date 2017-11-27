@@ -13,7 +13,7 @@
 
 Where can I get the latest release?
 -----------------------------------
-Currently snapshot builds a published to the Sonatype Nexus repository.  You need to enable The Sonatype snapshot repository, for example:
+Currently snapshot builds a published to the Sonatype Nexus repository.  You need to enable The Sonatype snapshot repository for these.  Additionally some transitive dependencies are not on maven central but are on clojars and jcenter so these also need to be added.
 
 ```xml
   <repositories>
@@ -24,6 +24,14 @@ Currently snapshot builds a published to the Sonatype Nexus repository.  You nee
               <enabled>true</enabled>
           </snapshots>
       </repository>
+      <repository>
+          <id>clojars.org</id>
+          <url>http://clojars.org/repo</url>
+    </repository>
+   <repository>
+        <id>jcenter</id>
+        <url>http://jcenter.bintray.com </url>
+   </repository>  
   </repositories>
 ```
 Then add the latest bittrex4j snapshot to your dependencies section:
@@ -32,7 +40,7 @@ Then add the latest bittrex4j snapshot to your dependencies section:
 <dependency>
   <groupId>comb.github.ccob</groupId>
   <artifactId>bittrex4j</artifactId>
-  <version>0.0.1-SNAPSHOT</version>
+  <version>1.0.1-SNAPSHOT</version>
 </dependency>
 ```
 
