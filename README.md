@@ -38,7 +38,7 @@ Then add the latest bittrex4j snapshot to your dependencies section:
 
 ```xml
 <dependency>
-  <groupId>comb.github.ccob</groupId>
+  <groupId>com.github.ccob</groupId>
   <artifactId>bittrex4j</artifactId>
   <version>1.0.1-SNAPSHOT</version>
 </dependency>
