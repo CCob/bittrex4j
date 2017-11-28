@@ -20,6 +20,7 @@ import com.github.ccob.bittrex4j.listeners.InvocationResult;
 import com.github.ccob.bittrex4j.listeners.UpdateExchangeStateListener;
 import com.github.ccob.bittrex4j.listeners.UpdateSummaryStateListener;
 import com.google.gson.Gson;
+import com.google.gson.internal.LinkedTreeMap;
 import donky.microsoft.aspnet.signalr.client.hubs.HubConnection;
 import donky.microsoft.aspnet.signalr.client.hubs.HubProxy;
 import org.apache.http.HttpResponse;
@@ -124,10 +125,10 @@ public class BittrexExchange  {
         hubProxy.invoke("subscribeToExchangeDeltas",marketName).done( result -> {if(invocationResult != null) invocationResult.success(null);});
     }
 
-    public void queryExchangeState(String marketName){
-        hubProxy.invoke("queryExchangeState",marketName).done( exchangeState -> {
-            int bp = 0;
-        });
+    public void queryExchangeState(String marketName,UpdateExchangeStateListener updateExchangeStateListener){
+        hubProxy.invoke(LinkedTreeMap.class,"queryExchangeState",marketName)
+                .done(exchangeState -> updateExchangeStateListener
+                        .onEvent(mapper.readerFor(updateExchangeStateType).readValue(new Gson().toJson(exchangeState))));
     }
 
     public void disconnectFromWebSocket(){
