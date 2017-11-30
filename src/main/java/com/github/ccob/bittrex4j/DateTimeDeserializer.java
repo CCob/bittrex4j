@@ -30,13 +30,18 @@ public class DateTimeDeserializer extends JsonDeserializer<ZonedDateTime> {
                 DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss[.SSS]").withZone(ZoneId.of("UTC"));
 
         String value = p.getValueAsString();
+        ZonedDateTime result = null;
 
-        int index;
-        if((index = value.indexOf('.')) > -1){
-            char[] chars = new char[4 - (value.length()-index)];
-            Arrays.fill(chars, '0');
-            value += new String(chars);
+        if(value != null) {
+            int index;
+            if ((index = value.indexOf('.')) > -1) {
+                char[] chars = new char[4 - (value.length() - index)];
+                Arrays.fill(chars, '0');
+                value += new String(chars);
+            }
+            result = ZonedDateTime.from(formatter.parse(value));
         }
-        return ZonedDateTime.from(formatter.parse(value));
+
+        return result;
     }
 }
