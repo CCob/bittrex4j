@@ -4,7 +4,9 @@
 
 
 ![bittrex4j Logo](docs/bittrex4j.png)  
-![Travis CI Status](https://travis-ci.org/CCob/bittrex4j.svg?branch=master) [![codecov](https://codecov.io/gh/CCob/bittrex4j/branch/master/graph/badge.svg)](https://codecov.io/gh/CCob/bittrex4j)
+
+![bittrex4j Logo](docs/bittrex4j.png)  
+![Travis CI Status](https://travis-ci.org/CCob/bittrex4j.svg?branch=master) [![codecov](https://codecov.io/gh/CCob/bittrex4j/branch/master/graph/badge.svg)](https://codecov.io/gh/CCob/bittrex4j)  ![Maven Version](https://maven-badges.herokuapp.com/maven-central/com.github.ccob/bittrex4j/badge.svg)
 
 
 
@@ -13,7 +15,7 @@
 
 Where can I get the latest release?
 -----------------------------------
-Currently snapshot builds a published to the Sonatype Nexus repository.  You need to enable The Sonatype snapshot repository for these.  Additionally some transitive dependencies are not on maven central but are on clojars and jcenter so these also need to be added.
+Currently snapshot builds a published to the Sonatype Nexus repository.  You need to enable The Sonatype snapshot repository, for example:
 
 ```xml
   <repositories>
@@ -24,23 +26,15 @@ Currently snapshot builds a published to the Sonatype Nexus repository.  You nee
               <enabled>true</enabled>
           </snapshots>
       </repository>
-      <repository>
-          <id>clojars.org</id>
-          <url>http://clojars.org/repo</url>
-    </repository>
-   <repository>
-        <id>jcenter</id>
-        <url>http://jcenter.bintray.com </url>
-   </repository>  
   </repositories>
 ```
 Then add the latest bittrex4j snapshot to your dependencies section:
 
 ```xml
 <dependency>
-  <groupId>com.github.ccob</groupId>
+  <groupId>comb.github.ccob</groupId>
   <artifactId>bittrex4j</artifactId>
-  <version>1.0.1-SNAPSHOT</version>
+  <version>0.0.1-SNAPSHOT</version>
 </dependency>
 ```
 

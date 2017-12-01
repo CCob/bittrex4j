@@ -6,7 +6,7 @@
 
     { "type":"inbuilt", "value":"project-name" },
     { "type":"markdown", "value":"\n![bittrex4j Logo](docs/bittrex4j.png)  \n" },
-    { "type":"markdown", "value":"![Travis CI Status](https://travis-ci.org/CCob/bittrex4j.svg?branch=master) [![codecov](https://codecov.io/gh/CCob/bittrex4j/branch/master/graph/badge.svg)](https://codecov.io/gh/CCob/bittrex4j)\n\n"},
+    { "type":"markdown", "value":"![Travis CI Status](https://travis-ci.org/CCob/bittrex4j.svg?branch=master) [![codecov](https://codecov.io/gh/CCob/bittrex4j/branch/master/graph/badge.svg)](https://codecov.io/gh/CCob/bittrex4j)  ![Maven Version](https://maven-badges.herokuapp.com/maven-central/com.github.ccob/bittrex4j/badge.svg)\n\n"},
     { "type":"inbuilt", "value":"project-description" },
     { "type":"file", "value":"docs/latest-release.md" },
 
