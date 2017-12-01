@@ -73,6 +73,7 @@ public class BittrexExchangeTest {
     private static final String IO_ERROR = "IO Error";
     private static final String STATUS_OK_TEXT = "OK";
     private BittrexExchange bittrexExchange;
+    private boolean lambdaCalled;
 
     private HttpResponse createResponse(int httpStatus, String statusText, String responseText){
 
@@ -106,6 +107,7 @@ public class BittrexExchangeTest {
         when(mockHttpFactory.createHubConnection(any(),any(),anyBoolean(),any())).thenReturn(mockHubConnection);
 
         bittrexExchange = new BittrexExchange("apikey","secret", mockHttpFactory);
+        lambdaCalled = false;
     }
 
     private void setExpectationForHubConnectionSuccess(){
@@ -343,9 +345,11 @@ public class BittrexExchangeTest {
         bittrexExchange.onUpdateSummaryState(exchangeSummaryState -> {
             assertThat(exchangeSummaryState.getNounce(), equalTo(24724L));
             assertThat(exchangeSummaryState.getDeltas().length, equalTo(56));
+            lambdaCalled=true;
         });
 
         subscriptionHandlerArgumentCaptor.getValue().run(new Gson().fromJson(loadTestResourceAsString("/UpdateSummaryState.json"),LinkedTreeMap.class));
+        assertThat(lambdaCalled,is(true));
     }
 
 
@@ -361,8 +365,10 @@ public class BittrexExchangeTest {
             assertThat(updateExchangeState.getBuys().length, equalTo(5));
             assertThat(updateExchangeState.getSells().length, equalTo(29));
             assertThat(updateExchangeState.getFills().length, equalTo(1));
+            lambdaCalled=true;
         });
 
         subscriptionHandlerArgumentCaptor.getValue().run(new Gson().fromJson(loadTestResourceAsString("/UpdateExchangeState.json"), Object.class));
+        assertThat(lambdaCalled,is(true));
     }
 }

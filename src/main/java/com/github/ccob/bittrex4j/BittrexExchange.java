@@ -16,12 +16,16 @@ import com.fasterxml.jackson.databind.JavaType;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.module.SimpleModule;
 import com.github.ccob.bittrex4j.dao.*;
+import com.github.ccob.bittrex4j.dao.Currency;
 import com.github.ccob.bittrex4j.listeners.InvocationResult;
 import com.github.ccob.bittrex4j.listeners.UpdateExchangeStateListener;
 import com.github.ccob.bittrex4j.listeners.UpdateSummaryStateListener;
 import com.google.gson.Gson;
+import com.google.gson.internal.LinkedTreeMap;
+import donky.microsoft.aspnet.signalr.client.ConnectionState;
 import donky.microsoft.aspnet.signalr.client.hubs.HubConnection;
 import donky.microsoft.aspnet.signalr.client.hubs.HubProxy;
+import donky.microsoft.aspnet.signalr.client.transport.WebsocketTransport;
 import org.apache.http.HttpResponse;
 import org.apache.http.client.HttpClient;
 import org.apache.http.client.methods.HttpGet;
@@ -35,6 +39,7 @@ import java.math.BigDecimal;
 import java.security.InvalidKeyException;
 import java.security.NoSuchAlgorithmException;
 import java.time.ZonedDateTime;
+import java.util.*;
 
 public class BittrexExchange  {
 
@@ -58,6 +63,8 @@ public class BittrexExchange  {
     private HubProxy hubProxy;
     private HttpClientContext httpClientContext;
     private HttpFactory httpFactory;
+    private List<String> marketSubscriptions = new ArrayList<>();
+    private Timer reconnectMonitorTimer = new Timer();
 
     private Observable<UpdateExchangeState> updateExchangeStateBroker = new Observable<>();
     private Observable<ExchangeSummaryState> exchangeSummaryStateBroker = new Observable<>();
@@ -120,14 +127,15 @@ public class BittrexExchange  {
     }
 
 
-    public void subscribeToExchangeDeltas(String marketName, InvocationResult<? extends Object> invocationResult){
-        hubProxy.invoke("subscribeToExchangeDeltas",marketName).done( result -> {if(invocationResult != null) invocationResult.success(null);});
+    public void subscribeToExchangeDeltas(String marketName, InvocationResult<? extends Object> invocationResult) {
+        hubProxy.invoke("subscribeToExchangeDeltas", marketName)
+                .done(result -> marketSubscriptions.add(marketName));
     }
 
-    public void queryExchangeState(String marketName){
-        hubProxy.invoke("queryExchangeState",marketName).done( exchangeState -> {
-            int bp = 0;
-        });
+    public void queryExchangeState(String marketName,UpdateExchangeStateListener updateExchangeStateListener){
+        hubProxy.invoke(LinkedTreeMap.class,"queryExchangeState",marketName)
+                .done(exchangeState -> updateExchangeStateListener
+                        .onEvent(mapper.readerFor(updateExchangeStateType).readValue(new Gson().toJson(exchangeState))));
     }
 
     public void disconnectFromWebSocket(){
@@ -144,6 +152,28 @@ public class BittrexExchange  {
         
         registerForEvent("updateSummaryState", exchangeSummaryStateType,exchangeSummaryStateBroker);
         registerForEvent("updateExchangeState", updateExchangeStateType,updateExchangeStateBroker);
+
+        hubConnection.reconnected(() ->
+                marketSubscriptions.forEach(marketSubscription ->
+                        subscribeToExchangeDeltas(marketSubscription,null)));
+
+        hubConnection.stateChanged((oldState, newState) -> {
+            if(newState== ConnectionState.Reconnecting){
+                reconnectMonitorTimer.schedule(new TimerTask() {
+                    @Override
+                    public void run() {
+                        log.info("Hub connection state: {}",hubConnection.getState());
+                        if(hubConnection.getState()==ConnectionState.Reconnecting || hubConnection.getState() == ConnectionState.Disconnected){
+                            hubConnection.disconnect();
+                            hubConnection.start();
+                        }else{
+                            cancel();
+                        }
+                    }
+                }, 10000, 10000);
+
+            }
+        });
 
         hubConnection.error( er -> log.error("Error: " + er.toString()));
         hubConnection.start();
