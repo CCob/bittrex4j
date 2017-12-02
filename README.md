@@ -4,8 +4,6 @@
 
 
 ![bittrex4j Logo](docs/bittrex4j.png)  
-
-![bittrex4j Logo](docs/bittrex4j.png)  
 ![Travis CI Status](https://travis-ci.org/CCob/bittrex4j.svg?branch=master) [![codecov](https://codecov.io/gh/CCob/bittrex4j/branch/master/graph/badge.svg)](https://codecov.io/gh/CCob/bittrex4j)  ![Maven Version](https://maven-badges.herokuapp.com/maven-central/com.github.ccob/bittrex4j/badge.svg)
 
 
@@ -15,7 +13,18 @@
 
 Where can I get the latest release?
 -----------------------------------
-Currently snapshot builds a published to the Sonatype Nexus repository.  You need to enable The Sonatype snapshot repository, for example:
+
+bittrex4j is published on the maven central repository and can be imported into you project using the following maven coordinates.
+
+```xml
+<dependency>
+  <groupId>com.github.ccob</groupId>
+  <artifactId>bittrex4j</artifactId>
+  <version>1.0.1</version>
+</dependency>
+```
+
+Snapshot builds are also available and published to the Sonatype Nexus repository.  You need to enable The Sonatype snapshot repository, for example:
 
 ```xml
   <repositories>
@@ -28,17 +37,7 @@ Currently snapshot builds a published to the Sonatype Nexus repository.  You nee
       </repository>
   </repositories>
 ```
-Then add the latest bittrex4j snapshot to your dependencies section:
-
-```xml
-<dependency>
-  <groupId>comb.github.ccob</groupId>
-  <artifactId>bittrex4j</artifactId>
-  <version>0.0.1-SNAPSHOT</version>
-</dependency>
-```
-
-Once the API has had time to stabilise I will publish it to maven central
+Then add the latest bittrex4j snapshot to your dependencies section
 ##Examples
 
 **Print Markets by Volume (REST API)**
