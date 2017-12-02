@@ -18,6 +18,7 @@ import java.util.Set;
 import static pl.pojo.tester.api.assertion.Assertions.assertPojoMethodsFor;
 import static pl.pojo.tester.api.assertion.Method.CONSTRUCTOR;
 import static pl.pojo.tester.api.assertion.Method.GETTER;
+import static pl.pojo.tester.api.assertion.Method.SETTER;
 
 
 @RunWith(Parameterized.class)
@@ -45,7 +46,7 @@ public class DaoTests {
             assertPojoMethodsFor(classUnderTest).testing(CONSTRUCTOR)
                     .areWellImplemented();
         }else {
-            assertPojoMethodsForFill(CONSTRUCTOR);
+            assertPojoMethodsForFill(new Method[]{CONSTRUCTOR});
         }
     }
 
@@ -55,11 +56,11 @@ public class DaoTests {
             assertPojoMethodsFor(classUnderTest).testing(GETTER)
                     .areWellImplemented();
         }else {
-            assertPojoMethodsForFill(GETTER);
+            assertPojoMethodsForFill(new Method[]{GETTER});
         }
     }
 
-    private void assertPojoMethodsForFill(Method method){
+    private void assertPojoMethodsForFill(Method method[]){
         final Object[] constructorParameters = {1L, "string1", "string2", Double.valueOf(2), null, 4.0, Double.valueOf(5), ZonedDateTime.now()};
         final Class[] constructorParameterTypes = {Long.class, String.class, String.class, Double.class, Double.class, double.class, Double.class, ZonedDateTime.class};
         assertPojoMethodsFor(classUnderTest)
