@@ -1,13 +1,17 @@
 package com.github.ccob.bittrex4j.dao;
 
 
+import com.fasterxml.jackson.annotation.JsonProperty;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
 import org.junit.runners.Parameterized.Parameters;
 import org.reflections.Reflections;
 import org.reflections.scanners.SubTypesScanner;
+import pl.pojo.tester.api.assertion.Method;
 
+import javax.annotation.Nullable;
+import java.time.ZonedDateTime;
 import java.util.Collection;
 import java.util.Set;
 
@@ -28,19 +32,6 @@ public class DaoTests {
 
         //Dont want to test the tester class itself
         classes.remove(DaoTests.class);
-
-        //Problematic tests due to pojo-tester not able to
-        //construct ZoneId for ZonedDateTime construction
-        classes.remove(Order.class);
-        classes.remove(WalletHealth.class);
-        classes.remove(Fill.class);
-        classes.remove(WalletHealthResult.class);
-        classes.remove(Market.class);
-        classes.remove(CompletedOrder.class);
-        classes.remove(MarketSummaryResult.class);
-        classes.remove(Tick.class);
-        classes.remove(WithdrawalDeposit.class);
-
         return classes;
     }
 
@@ -50,14 +41,32 @@ public class DaoTests {
 
     @Test
     public void shouldConstructDaoPojos(){
-        assertPojoMethodsFor(classUnderTest).testing(CONSTRUCTOR )
-                .areWellImplemented();
+        if(classUnderTest!=Fill.class) {
+            assertPojoMethodsFor(classUnderTest).testing(CONSTRUCTOR)
+                    .areWellImplemented();
+        }else {
+            assertPojoMethodsForFill(CONSTRUCTOR);
+        }
     }
 
     @Test
     public void shouldImplementDaoPojoGetters(){
-        assertPojoMethodsFor(classUnderTest).testing(GETTER )
-                .areWellImplemented();
-
+        if(classUnderTest!=Fill.class) {
+            assertPojoMethodsFor(classUnderTest).testing(GETTER)
+                    .areWellImplemented();
+        }else {
+            assertPojoMethodsForFill(GETTER);
+        }
     }
+
+    private void assertPojoMethodsForFill(Method method){
+        final Object[] constructorParameters = {1L, "string1", "string2", Double.valueOf(2), null, 4.0, Double.valueOf(5), ZonedDateTime.now()};
+        final Class[] constructorParameterTypes = {Long.class, String.class, String.class, Double.class, Double.class, double.class, Double.class, ZonedDateTime.class};
+        assertPojoMethodsFor(classUnderTest)
+                .create(classUnderTest, constructorParameters, constructorParameterTypes)
+                .testing(method)
+                .areWellImplemented();
+    }
+
+
 }
