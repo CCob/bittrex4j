@@ -198,12 +198,12 @@ public class BittrexExchange  {
                         subscribeToExchangeDeltas(marketSubscription,null)));
 
         hubConnection.stateChanged((oldState, newState) -> {
-            if(newState== ConnectionState.Reconnecting){
+            if(newState == ConnectionState.Reconnecting || newState == ConnectionState.Connecting){
                 reconnectMonitorTimer.schedule(new TimerTask() {
                     @Override
                     public void run() {
                         log.info("Hub connection state: {}",hubConnection.getState());
-                        if(hubConnection.getState()==ConnectionState.Reconnecting || hubConnection.getState() == ConnectionState.Disconnected){
+                        if(hubConnection.getState()!=ConnectionState.Connected){
                             hubConnection.disconnect();
                             try {
                                 performCloudFlareAuthorization();
@@ -211,6 +211,7 @@ public class BittrexExchange  {
                                 hubConnection.start();
                                 log.error("Failed to perform CloudFlare authorization on reconnect", e);
                             }
+                            hubConnection.start();
                         }else{
                             cancel();
                         }
