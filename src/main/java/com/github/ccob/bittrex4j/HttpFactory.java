@@ -12,16 +12,20 @@
 package com.github.ccob.bittrex4j;
 
 import donky.microsoft.aspnet.signalr.client.Logger;
+import donky.microsoft.aspnet.signalr.client.Platform;
 import donky.microsoft.aspnet.signalr.client.hubs.HubConnection;
-import donky.microsoft.aspnet.signalr.client.hubs.HubProxy;
 import org.apache.http.client.HttpClient;
 import org.apache.http.client.protocol.HttpClientContext;
-import org.apache.http.impl.client.HttpClientBuilder;
+import org.apache.http.impl.client.HttpClients;
 
 public class HttpFactory {
 
     public HttpClient createClient(){
-        return HttpClientBuilder.create().build();
+        return HttpClients
+                .custom()
+                //hack, since we cant control the user agent inside the signalr library
+                .setUserAgent(Platform.getUserAgent())
+                .build();
     }
 
     public HttpClientContext createClientContext(){

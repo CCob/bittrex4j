@@ -15,6 +15,7 @@ import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.JavaType;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.module.SimpleModule;
+import com.github.ccob.bittrex4j.cloudflare.CloudFlareAuthorizer;
 import com.github.ccob.bittrex4j.dao.*;
 import com.github.ccob.bittrex4j.dao.Currency;
 import com.github.ccob.bittrex4j.listeners.InvocationResult;
@@ -25,7 +26,7 @@ import com.google.gson.internal.LinkedTreeMap;
 import donky.microsoft.aspnet.signalr.client.ConnectionState;
 import donky.microsoft.aspnet.signalr.client.hubs.HubConnection;
 import donky.microsoft.aspnet.signalr.client.hubs.HubProxy;
-import donky.microsoft.aspnet.signalr.client.transport.WebsocketTransport;
+import org.apache.http.HttpHeaders;
 import org.apache.http.HttpResponse;
 import org.apache.http.client.HttpClient;
 import org.apache.http.client.methods.HttpGet;
@@ -33,6 +34,7 @@ import org.apache.http.client.protocol.HttpClientContext;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import javax.script.ScriptException;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.math.BigDecimal;
@@ -40,6 +42,7 @@ import java.security.InvalidKeyException;
 import java.security.NoSuchAlgorithmException;
 import java.time.ZonedDateTime;
 import java.util.*;
+import java.util.stream.Collectors;
 
 public class BittrexExchange  {
 
@@ -96,7 +99,16 @@ public class BittrexExchange  {
 
         httpClient = httpFactory.createClient();
         httpClientContext = httpFactory.createClientContext();
-        httpClient.execute(new HttpGet("https://bittrex.com"),httpClientContext);
+
+        try {
+            CloudFlareAuthorizer cloudFlareAuthorizer = new CloudFlareAuthorizer(httpClient,httpClientContext);
+            cloudFlareAuthorizer.getAuthorizationResult("https://bittrex.com");
+        } catch (ScriptException e) {
+            e.printStackTrace();
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        }
+
         log.debug("Bittrex Cookies: " + httpClientContext.getCookieStore());
     }
 
@@ -176,6 +188,13 @@ public class BittrexExchange  {
         });
 
         hubConnection.error( er -> log.error("Error: " + er.toString()));
+
+        String cookies = httpClientContext.getCookieStore().getCookies()
+                .stream()
+                .map(cookie -> String.format("%s=%s", cookie.getName(), cookie.getValue()))
+                .collect(Collectors.joining(";"));
+
+        hubConnection.getHeaders().put("Cookie",cookies);
         hubConnection.start();
     }
 
