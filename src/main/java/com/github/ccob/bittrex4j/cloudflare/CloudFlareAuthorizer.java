@@ -78,8 +78,6 @@ public class CloudFlareAuthorizer {
             if (response.httpStatus != HttpStatus.SC_OK) {
                 log.error("Failed to perform Cloudflare DDoS authorization, got status {}", response.httpStatus);
                 return;
-            }else if(retries==5){
-                log.info("Cloudflare DDoS is not currently active");
             }
 
         }catch(InterruptedException ie){
@@ -96,7 +94,7 @@ public class CloudFlareAuthorizer {
             log.info("Cloudflare DDos authorization success, cf_clearance: {}",
                     cfClearanceCookie.get().getValue());
         }else{
-            log.info("Cloudflare DDoS authorization not needed");
+            log.info("Cloudflare DDoS is not currently active");
         }
     }
 
