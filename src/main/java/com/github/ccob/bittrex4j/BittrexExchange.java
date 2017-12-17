@@ -29,6 +29,7 @@ import donky.microsoft.aspnet.signalr.client.hubs.HubConnection;
 import donky.microsoft.aspnet.signalr.client.hubs.HubProxy;
 import org.apache.http.HttpHeaders;
 import org.apache.http.HttpResponse;
+import org.apache.http.client.CookieStore;
 import org.apache.http.client.HttpClient;
 import org.apache.http.client.methods.HttpGet;
 import org.apache.http.client.protocol.HttpClientContext;
@@ -102,13 +103,41 @@ public class BittrexExchange  {
         httpClient = httpFactory.createClient();
         httpClientContext = httpFactory.createClientContext();
 
+        performCloudFlareAuthorization();
+        log.debug("Bittrex Cookies: " + httpClientContext.getCookieStore());
+    }
+
+    private void performCloudFlareAuthorization() throws IOException {
+
+        CookieStore cookieStore = httpClientContext.getCookieStore();
+
+        if(cookieStore!=null) {
+            cookieStore.clearExpired(new Date());
+
+            if (httpClientContext.getCookieStore().getCookies()
+                    .stream()
+                    .anyMatch(cookie -> cookie.getName().equals("cf_clearance"))
+                    ) {
+                return;
+            }
+        }
+
         try {
             CloudFlareAuthorizer cloudFlareAuthorizer = new CloudFlareAuthorizer(httpClient,httpClientContext);
             cloudFlareAuthorizer.getAuthorizationResult("https://bittrex.com");
-            log.debug("Bittrex Cookies: " + httpClientContext.getCookieStore());
         } catch (ScriptException e) {
             log.error("Failed to perform CloudFlare authorization",e);
         }
+    }
+
+    private void prepareHubConnectionForCloudFlare(){
+        String cookies = httpClientContext.getCookieStore().getCookies()
+                .stream()
+                .map(cookie -> String.format("%s=%s", cookie.getName(), cookie.getValue()))
+                .collect(Collectors.joining(";"));
+
+        hubConnection.getHeaders().put("Cookie",cookies);
+        hubConnection.getHeaders().put(HttpHeaders.USER_AGENT, Platform.getUserAgent());
     }
 
     @Override
@@ -176,25 +205,22 @@ public class BittrexExchange  {
                         log.info("Hub connection state: {}",hubConnection.getState());
                         if(hubConnection.getState()==ConnectionState.Reconnecting || hubConnection.getState() == ConnectionState.Disconnected){
                             hubConnection.disconnect();
-                            hubConnection.start();
+                            try {
+                                performCloudFlareAuthorization();
+                            } catch (IOException e) {
+                                hubConnection.start();
+                                log.error("Failed to perform CloudFlare authorization on reconnect", e);
+                            }
                         }else{
                             cancel();
                         }
                     }
                 }, 10000, 10000);
-
             }
         });
 
+        prepareHubConnectionForCloudFlare();
         hubConnection.error( er -> log.error("Error: " + er.toString()));
-
-        String cookies = httpClientContext.getCookieStore().getCookies()
-                .stream()
-                .map(cookie -> String.format("%s=%s", cookie.getName(), cookie.getValue()))
-                .collect(Collectors.joining(";"));
-
-        hubConnection.getHeaders().put("Cookie",cookies);
-        hubConnection.getHeaders().put(HttpHeaders.USER_AGENT, Platform.getUserAgent());
         hubConnection.start();
     }
 
