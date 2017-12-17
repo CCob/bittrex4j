@@ -21,18 +21,21 @@ import org.apache.http.HttpResponse;
 import org.apache.http.HttpStatus;
 import org.apache.http.ProtocolVersion;
 import org.apache.http.client.HttpClient;
+import org.apache.http.client.methods.CloseableHttpResponse;
 import org.apache.http.client.methods.HttpGet;
 import org.apache.http.client.protocol.HttpClientContext;
 import org.apache.http.entity.BasicHttpEntity;
 import org.apache.http.impl.client.BasicCookieStore;
 import org.apache.http.message.BasicHttpResponse;
 import org.apache.http.message.BasicStatusLine;
+import org.apache.http.protocol.HTTP;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Captor;
 import org.mockito.Mock;
+import org.mockito.Mockito;
 import org.mockito.runners.MockitoJUnitRunner;
 
 import java.io.ByteArrayInputStream;
@@ -77,13 +80,18 @@ public class BittrexExchangeTest {
 
     private HttpResponse createResponse(int httpStatus, String statusText, String responseText){
 
-        BasicHttpResponse response = new BasicHttpResponse(new BasicStatusLine(
-                new ProtocolVersion("HTTP",1,1),httpStatus,statusText));
+        CloseableHttpResponse response = Mockito.mock(CloseableHttpResponse.class);
 
         BasicHttpEntity httpEntity = new BasicHttpEntity();
         httpEntity.setContent(new ByteArrayInputStream(responseText.getBytes()));
 
-        response.setEntity(httpEntity);
+        when(response.getStatusLine()).thenReturn(new BasicStatusLine(
+                new ProtocolVersion("HTTP", 1, 1), httpStatus, statusText));
+
+        when(response.getEntity()).thenReturn(httpEntity);
+
+        when(response.toString()).thenReturn("MockClosableHttpResponse");
+
         return response;
     }
 
@@ -98,9 +106,11 @@ public class BittrexExchangeTest {
 
         when(mockHubConnection.createHubProxy("CoreHub")).thenReturn(mockHubProxy);
 
+        HttpResponse mockResponse = createResponse(HttpStatus.SC_OK,STATUS_OK_TEXT,"Bittrex");
+
         when(mockHttpClientContext.getCookieStore()).thenReturn(new BasicCookieStore());
         when(mockHttpClient.execute(argThat(UrlMatcher.matchesUrl("https://bittrex.com")),eq(mockHttpClientContext)))
-                .thenReturn(createResponse(HttpStatus.SC_OK,STATUS_OK_TEXT,"Bittrex"));
+                .thenReturn(mockResponse);
 
         when(mockHttpFactory.createClient()).thenReturn(mockHttpClient);
         when(mockHttpFactory.createClientContext()).thenReturn(mockHttpClientContext);
@@ -117,8 +127,9 @@ public class BittrexExchangeTest {
     }
 
     private void setExpectationForNon2xxErrorOnWebAPICall() throws IOException {
+        HttpResponse mockResponse = createResponse(HttpStatus.SC_NOT_FOUND,NOT_FOUND,NOT_FOUND);
         when(mockHttpClient.execute(any(HttpGet.class),eq(mockHttpClientContext)))
-                .thenReturn(createResponse(HttpStatus.SC_NOT_FOUND,NOT_FOUND,NOT_FOUND));
+                .thenReturn(mockResponse);
     }
 
     private void setExpectationForExceptionOnWebAPICall() throws IOException {
@@ -127,8 +138,9 @@ public class BittrexExchangeTest {
     }
 
     private void setExpectationForJsonResultOnWebAPICall(String jsonResult) throws IOException {
+        HttpResponse mockResponse = createResponse(HttpStatus.SC_OK,STATUS_OK_TEXT,jsonResult);
         when(mockHttpClient.execute(any(HttpGet.class),eq(mockHttpClientContext)))
-                .thenReturn(createResponse(HttpStatus.SC_OK,STATUS_OK_TEXT,jsonResult));
+                .thenReturn(mockResponse);
     }
 
     @Test

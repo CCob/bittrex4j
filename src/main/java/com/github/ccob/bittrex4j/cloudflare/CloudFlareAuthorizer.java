@@ -9,6 +9,7 @@ import org.apache.http.client.HttpClient;
 import org.apache.http.client.methods.CloseableHttpResponse;
 import org.apache.http.client.methods.HttpGet;
 import org.apache.http.client.protocol.HttpClientContext;
+import org.apache.http.cookie.Cookie;
 import org.apache.http.impl.client.CloseableHttpClient;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -16,9 +17,11 @@ import org.slf4j.LoggerFactory;
 import javax.script.ScriptEngine;
 import javax.script.ScriptEngineManager;
 import javax.script.ScriptException;
+import javax.swing.text.html.Option;
 import java.io.IOException;
 import java.net.MalformedURLException;
 import java.net.URL;
+import java.util.Optional;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
@@ -27,7 +30,7 @@ public class CloudFlareAuthorizer {
 
     private static Logger log = LoggerFactory.getLogger(CloudFlareAuthorizer.class);
 
-    private CloseableHttpClient httpClient;
+    private HttpClient httpClient;
     private HttpClientContext httpClientContext;
     private Pattern jsChallenge = Pattern.compile("name=\"jschl_vc\" value=\"(.+?)\"");
     private Pattern password = Pattern.compile("name=\"pass\" value=\"(.+?)\"");
@@ -39,14 +42,14 @@ public class CloudFlareAuthorizer {
         private int httpStatus;
         private String responseText;
 
-        public Response(int httpStatus, String responseText) {
+        Response(int httpStatus, String responseText) {
             this.httpStatus = httpStatus;
             this.responseText = responseText;
         }
     }
 
     public CloudFlareAuthorizer(HttpClient httpClient, HttpClientContext httpClientContext) {
-        this.httpClient = (CloseableHttpClient)httpClient;
+        this.httpClient = httpClient;
         this.httpClientContext = httpClientContext;
     }
 
@@ -84,13 +87,17 @@ public class CloudFlareAuthorizer {
             return;
         }
 
-        log.info("Cloudflare DDos authorization success, cf_clearance: {}",
-                httpClientContext.getCookieStore().getCookies()
-                        .stream()
-                        .filter(cookie -> cookie.getName().equals("cf_clearance"))
-                        .findFirst().get().getValue());
+        Optional<Cookie> cfClearanceCookie = httpClientContext.getCookieStore().getCookies()
+                .stream()
+                .filter(cookie -> cookie.getName().equals("cf_clearance"))
+                .findFirst();
 
-
+        if(cfClearanceCookie.isPresent()) {
+            log.info("Cloudflare DDos authorization success, cf_clearance: {}",
+                    cfClearanceCookie.get().getValue());
+        }else{
+            log.info("Cloudflare DDoS authorization not needed");
+        }
     }
 
     private Response getResponse(String url, String referer) throws IOException {
