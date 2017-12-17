@@ -113,18 +113,16 @@ public class BittrexExchange  {
 
         if(cookieStore!=null) {
             cookieStore.clearExpired(new Date());
-
-            if (httpClientContext.getCookieStore().getCookies()
-                    .stream()
-                    .anyMatch(cookie -> cookie.getName().equals("cf_clearance"))
-                    ) {
-                return;
-            }
         }
 
         try {
-            CloudFlareAuthorizer cloudFlareAuthorizer = new CloudFlareAuthorizer(httpClient,httpClientContext);
-            cloudFlareAuthorizer.getAuthorizationResult("https://bittrex.com");
+            if (httpClientContext.getCookieStore() == null || httpClientContext.getCookieStore().getCookies()
+                                                                .stream()
+                                                                .noneMatch(cookie -> cookie.getName().equals("cf_clearance"))) {
+
+                CloudFlareAuthorizer cloudFlareAuthorizer = new CloudFlareAuthorizer(httpClient,httpClientContext);
+                cloudFlareAuthorizer.getAuthorizationResult("https://bittrex.com");
+            }
         } catch (ScriptException e) {
             log.error("Failed to perform CloudFlare authorization",e);
         }
@@ -207,6 +205,7 @@ public class BittrexExchange  {
                             hubConnection.disconnect();
                             try {
                                 performCloudFlareAuthorization();
+                                prepareHubConnectionForCloudFlare();
                             } catch (IOException e) {
                                 hubConnection.start();
                                 log.error("Failed to perform CloudFlare authorization on reconnect", e);
