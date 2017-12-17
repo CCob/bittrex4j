@@ -15,6 +15,7 @@ import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.JavaType;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.module.SimpleModule;
+import com.github.ccob.bittrex4j.cloudflare.CloudFlareAuthorizer;
 import com.github.ccob.bittrex4j.dao.*;
 import com.github.ccob.bittrex4j.dao.Currency;
 import com.github.ccob.bittrex4j.listeners.InvocationResult;
@@ -23,16 +24,20 @@ import com.github.ccob.bittrex4j.listeners.UpdateSummaryStateListener;
 import com.google.gson.Gson;
 import com.google.gson.internal.LinkedTreeMap;
 import donky.microsoft.aspnet.signalr.client.ConnectionState;
+import donky.microsoft.aspnet.signalr.client.Platform;
 import donky.microsoft.aspnet.signalr.client.hubs.HubConnection;
 import donky.microsoft.aspnet.signalr.client.hubs.HubProxy;
-import donky.microsoft.aspnet.signalr.client.transport.WebsocketTransport;
+import org.apache.http.HttpHeaders;
 import org.apache.http.HttpResponse;
+import org.apache.http.client.CookieStore;
 import org.apache.http.client.HttpClient;
 import org.apache.http.client.methods.HttpGet;
 import org.apache.http.client.protocol.HttpClientContext;
+import org.java_websocket.WebSocketImpl;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import javax.script.ScriptException;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.math.BigDecimal;
@@ -40,6 +45,7 @@ import java.security.InvalidKeyException;
 import java.security.NoSuchAlgorithmException;
 import java.time.ZonedDateTime;
 import java.util.*;
+import java.util.stream.Collectors;
 
 public class BittrexExchange  {
 
@@ -96,8 +102,42 @@ public class BittrexExchange  {
 
         httpClient = httpFactory.createClient();
         httpClientContext = httpFactory.createClientContext();
-        httpClient.execute(new HttpGet("https://bittrex.com"),httpClientContext);
+
+        performCloudFlareAuthorization();
         log.debug("Bittrex Cookies: " + httpClientContext.getCookieStore());
+    }
+
+    private void performCloudFlareAuthorization() throws IOException {
+
+        CookieStore cookieStore = httpClientContext.getCookieStore();
+
+        if(cookieStore!=null) {
+            cookieStore.clearExpired(new Date());
+
+            if (httpClientContext.getCookieStore().getCookies()
+                    .stream()
+                    .anyMatch(cookie -> cookie.getName().equals("cf_clearance"))
+                    ) {
+                return;
+            }
+        }
+
+        try {
+            CloudFlareAuthorizer cloudFlareAuthorizer = new CloudFlareAuthorizer(httpClient,httpClientContext);
+            cloudFlareAuthorizer.getAuthorizationResult("https://bittrex.com");
+        } catch (ScriptException e) {
+            log.error("Failed to perform CloudFlare authorization",e);
+        }
+    }
+
+    private void prepareHubConnectionForCloudFlare(){
+        String cookies = httpClientContext.getCookieStore().getCookies()
+                .stream()
+                .map(cookie -> String.format("%s=%s", cookie.getName(), cookie.getValue()))
+                .collect(Collectors.joining(";"));
+
+        hubConnection.getHeaders().put("Cookie",cookies);
+        hubConnection.getHeaders().put(HttpHeaders.USER_AGENT, Platform.getUserAgent());
     }
 
     @Override
@@ -165,16 +205,21 @@ public class BittrexExchange  {
                         log.info("Hub connection state: {}",hubConnection.getState());
                         if(hubConnection.getState()==ConnectionState.Reconnecting || hubConnection.getState() == ConnectionState.Disconnected){
                             hubConnection.disconnect();
-                            hubConnection.start();
+                            try {
+                                performCloudFlareAuthorization();
+                            } catch (IOException e) {
+                                hubConnection.start();
+                                log.error("Failed to perform CloudFlare authorization on reconnect", e);
+                            }
                         }else{
                             cancel();
                         }
                     }
                 }, 10000, 10000);
-
             }
         });
 
+        prepareHubConnectionForCloudFlare();
         hubConnection.error( er -> log.error("Error: " + er.toString()));
         hubConnection.start();
     }
