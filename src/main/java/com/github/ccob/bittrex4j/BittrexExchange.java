@@ -24,6 +24,7 @@ import com.github.ccob.bittrex4j.listeners.UpdateSummaryStateListener;
 import com.google.gson.Gson;
 import com.google.gson.internal.LinkedTreeMap;
 import donky.microsoft.aspnet.signalr.client.ConnectionState;
+import donky.microsoft.aspnet.signalr.client.Platform;
 import donky.microsoft.aspnet.signalr.client.hubs.HubConnection;
 import donky.microsoft.aspnet.signalr.client.hubs.HubProxy;
 import org.apache.http.HttpHeaders;
@@ -31,6 +32,7 @@ import org.apache.http.HttpResponse;
 import org.apache.http.client.HttpClient;
 import org.apache.http.client.methods.HttpGet;
 import org.apache.http.client.protocol.HttpClientContext;
+import org.java_websocket.WebSocketImpl;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -103,13 +105,10 @@ public class BittrexExchange  {
         try {
             CloudFlareAuthorizer cloudFlareAuthorizer = new CloudFlareAuthorizer(httpClient,httpClientContext);
             cloudFlareAuthorizer.getAuthorizationResult("https://bittrex.com");
+            log.debug("Bittrex Cookies: " + httpClientContext.getCookieStore());
         } catch (ScriptException e) {
-            e.printStackTrace();
-        } catch (InterruptedException e) {
-            e.printStackTrace();
+            log.error("Failed to perform CloudFlare authorization",e);
         }
-
-        log.debug("Bittrex Cookies: " + httpClientContext.getCookieStore());
     }
 
     @Override
@@ -195,6 +194,7 @@ public class BittrexExchange  {
                 .collect(Collectors.joining(";"));
 
         hubConnection.getHeaders().put("Cookie",cookies);
+        hubConnection.getHeaders().put(HttpHeaders.USER_AGENT, Platform.getUserAgent());
         hubConnection.start();
     }
 

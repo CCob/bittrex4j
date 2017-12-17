@@ -50,34 +50,37 @@ public class CloudFlareAuthorizer {
         this.httpClientContext = httpClientContext;
     }
 
-    public void getAuthorizationResult(String url) throws IOException, ScriptException, InterruptedException {
+    public void getAuthorizationResult(String url) throws IOException, ScriptException {
 
         URL cloudFlareUrl = new URL(url);
-        Response initialResponse = getResponse(url,null);
 
-        if(initialResponse.httpStatus != HttpStatus.SC_SERVICE_UNAVAILABLE){
-            log.info("Cloudflare DDos doesn't appear to be active, got status {}",initialResponse.httpStatus);
-            return;
-        }
+        try {
 
-        int answer = getJsAnswer(cloudFlareUrl,initialResponse.responseText);
-        String jschl_vc = new PatternStreamer(jsChallenge).results(initialResponse.responseText).findFirst().get();
-        String pass =  new PatternStreamer(password).results(initialResponse.responseText).findFirst().get();
+            int retries = 5;
+            Response response = getResponse(url,null);
 
-        String authUrl = String.format("https://%s/cdn-cgi/l/chk_jschl?jschl_vc=%s&pass=%s&jschl_answer=%d",
-                cloudFlareUrl.getHost(),jschl_vc,pass,answer);
+            while (response.httpStatus == HttpStatus.SC_SERVICE_UNAVAILABLE && retries-- > 0) {
 
-        Thread.sleep(5000);
-        int retries = 5;
-        Response authResponse = getResponse(authUrl, url);
+                int answer = getJsAnswer(cloudFlareUrl,response.responseText);
+                String jschl_vc = new PatternStreamer(jsChallenge).results(response.responseText).findFirst().get();
+                String pass =  new PatternStreamer(password).results(response.responseText).findFirst().get();
 
-        while(authResponse.httpStatus != HttpStatus.SC_OK && retries-- > 0) {
-            authResponse = getResponse(authUrl, authUrl);
-            Thread.sleep(100);
-        }
+                String authUrl = String.format("https://%s/cdn-cgi/l/chk_jschl?jschl_vc=%s&pass=%s&jschl_answer=%d",
+                        cloudFlareUrl.getHost(),jschl_vc,pass,answer);
 
-        if (authResponse.httpStatus != HttpStatus.SC_OK) {
-            log.error("Failed to perform Cloudflare DDos authorization, got status {}", authResponse.httpStatus);
+                Thread.sleep(5000);
+                response = getResponse(authUrl, url);
+            }
+
+            if (response.httpStatus != HttpStatus.SC_OK) {
+                log.error("Failed to perform Cloudflare DDoS authorization, got status {}", response.httpStatus);
+                return;
+            }else if(retries==5){
+                log.info("Cloudflare DDoS is not currently active");
+            }
+
+        }catch(InterruptedException ie){
+            log.error("Interrupted whilst waiting to perform CloudFlare authorization",ie);
             return;
         }
 
