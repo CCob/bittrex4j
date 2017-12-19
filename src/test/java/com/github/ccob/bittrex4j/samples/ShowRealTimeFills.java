@@ -14,6 +14,18 @@ public class ShowRealTimeFills {
 
         BittrexExchange bittrexExchange = new BittrexExchange();
 
+        bittrexExchange.onUpdateSummaryState(exchangeSummaryState -> {
+            if (exchangeSummaryState.getDeltas().length > 0) {
+
+                Arrays.stream(exchangeSummaryState.getDeltas())
+                        .filter(marketSummary -> marketSummary.getMarketName().equals("BTC-BCC") || marketSummary.getMarketName().equals("BTC-ETH") )
+                        .forEach(marketSummary -> System.out.println(
+                                String.format("24 hour volume for market %s: %s",
+                                        marketSummary.getMarketName(),
+                                        marketSummary.getVolume().toString())));
+            }
+        });
+
         bittrexExchange.onUpdateExchangeState(updateExchangeState -> {
             if(updateExchangeState.getFills().length > 0) {
                 double volume = Arrays.stream(updateExchangeState.getFills())
@@ -28,6 +40,7 @@ public class ShowRealTimeFills {
         bittrexExchange.connectToWebSocket( () -> {
             bittrexExchange.subscribeToExchangeDeltas("BTC-ETH", null);
             bittrexExchange.subscribeToExchangeDeltas("BTC-BCC",null);
+            bittrexExchange.subscribeToMarketSummaries(null);
         });
 
         System.in.read();

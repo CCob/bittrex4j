@@ -33,7 +33,6 @@ import org.apache.http.client.CookieStore;
 import org.apache.http.client.HttpClient;
 import org.apache.http.client.methods.HttpGet;
 import org.apache.http.client.protocol.HttpClientContext;
-import org.java_websocket.WebSocketImpl;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -168,6 +167,11 @@ public class BittrexExchange  {
     public void subscribeToExchangeDeltas(String marketName, InvocationResult<? extends Object> invocationResult) {
         hubProxy.invoke("subscribeToExchangeDeltas", marketName)
                 .done(result -> marketSubscriptions.add(marketName));
+    }
+
+    public void subscribeToMarketSummaries(InvocationResult<Void> invocationResult) {
+        hubProxy.invoke("SubscribeToSummaryDeltas")
+                .done(result -> {if(invocationResult != null) invocationResult.success(result);});
     }
 
     public void queryExchangeState(String marketName,UpdateExchangeStateListener updateExchangeStateListener){
