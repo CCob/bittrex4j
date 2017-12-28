@@ -11,7 +11,7 @@
 
 package com.github.ccob.bittrex4j;
 
-import donky.microsoft.aspnet.signalr.client.LogLevel;
+import com.github.signalr4j.client.LogLevel;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;

@@ -11,9 +11,9 @@
 
 package com.github.ccob.bittrex4j;
 
-import donky.microsoft.aspnet.signalr.client.Logger;
-import donky.microsoft.aspnet.signalr.client.Platform;
-import donky.microsoft.aspnet.signalr.client.hubs.HubConnection;
+import com.github.signalr4j.client.Logger;
+import com.github.signalr4j.client.Platform;
+import com.github.signalr4j.client.hubs.HubConnection;
 import org.apache.http.client.HttpClient;
 import org.apache.http.client.protocol.HttpClientContext;
 import org.apache.http.impl.client.HttpClients;
