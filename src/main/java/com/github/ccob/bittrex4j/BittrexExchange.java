@@ -245,7 +245,7 @@ public class BittrexExchange  {
     public Response<MarketSummary> getMarketSummary(String market) {
         return getResponse(new TypeReference<Response<MarketSummary>>(){}, UrlBuilder.v2()
                 .withGroup(MARKET)
-                .withMethod("getmarketsumary")
+                .withMethod("getmarketsummary")
                 .withArgument("marketname",market));
     }
 
