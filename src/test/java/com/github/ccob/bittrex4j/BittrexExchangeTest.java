@@ -115,7 +115,7 @@ public class BittrexExchangeTest {
         when(mockHttpFactory.createClientContext()).thenReturn(mockHttpClientContext);
         when(mockHttpFactory.createHubConnection(any(),any(),anyBoolean(),any())).thenReturn(mockHubConnection);
 
-        bittrexExchange = new BittrexExchange("apikey","secret", mockHttpFactory);
+        bittrexExchange = new BittrexExchange(0,"apikey","secret", mockHttpFactory);
         lambdaCalled = false;
     }
 

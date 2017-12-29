@@ -17,18 +17,17 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.module.SimpleModule;
 import com.github.ccob.bittrex4j.cloudflare.CloudFlareAuthorizer;
 import com.github.ccob.bittrex4j.dao.*;
-import com.github.ccob.bittrex4j.dao.Currency;
 import com.github.ccob.bittrex4j.listeners.InvocationResult;
 import com.github.ccob.bittrex4j.listeners.UpdateExchangeStateListener;
 import com.github.ccob.bittrex4j.listeners.UpdateSummaryStateListener;
-import com.google.gson.Gson;
-import com.google.gson.internal.LinkedTreeMap;
 import com.github.signalr4j.client.Platform;
 import com.github.signalr4j.client.hubs.HubConnection;
 import com.github.signalr4j.client.hubs.HubProxy;
+import com.google.gson.Gson;
+import com.google.gson.internal.LinkedTreeMap;
 import org.apache.http.HttpHeaders;
-import org.apache.http.HttpResponse;
 import org.apache.http.client.HttpClient;
+import org.apache.http.client.methods.CloseableHttpResponse;
 import org.apache.http.client.methods.HttpGet;
 import org.apache.http.client.protocol.HttpClientContext;
 import org.slf4j.Logger;
@@ -41,7 +40,10 @@ import java.math.BigDecimal;
 import java.security.InvalidKeyException;
 import java.security.NoSuchAlgorithmException;
 import java.time.ZonedDateTime;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Timer;
+import java.util.TimerTask;
 import java.util.stream.Collectors;
 
 public class BittrexExchange  {
@@ -76,6 +78,8 @@ public class BittrexExchange  {
 
     private Timer reconnectTimer = new Timer();
 
+    private int retries;
+
     private class ReconnectTimerTask extends TimerTask{
         @Override
         public void run() {
@@ -84,18 +88,27 @@ public class BittrexExchange  {
     }
 
     public BittrexExchange() throws IOException {
-        this(null,null);
+        this(5);
     }
 
     public BittrexExchange(String apikey, String secret) throws IOException {
-        this(apikey,secret,new HttpFactory());
+        this(5,apikey,secret,new HttpFactory());
     }
 
-    public BittrexExchange(String apikey, String secret, HttpFactory httpFactory) throws IOException {
+    public BittrexExchange(int retries) throws IOException {
+        this(retries,null,null);
+    }
+
+    public BittrexExchange(int retries, String apikey, String secret) throws IOException {
+        this(retries,apikey,secret,new HttpFactory());
+    }
+
+    public BittrexExchange(int retries, String apikey, String secret, HttpFactory httpFactory) throws IOException {
 
         this.apikey = apikey;
         this.secret = secret;
         this.httpFactory = httpFactory;
+        this.retries = retries;
 
         mapper = new ObjectMapper();
         SimpleModule module = new SimpleModule();
@@ -382,10 +395,25 @@ public class BittrexExchange  {
     }
 
     private <Result> Response<Result> getResponse(TypeReference resultType, UrlBuilder urlBuilder) {
-        return getResponseBody(resultType, urlBuilder);
+
+        int triesLeft = retries;
+        Response<Result> result = getResponseBody(resultType, urlBuilder);
+
+        while(!result.isSuccess() && triesLeft-- > 0){
+            log.warn("Request to URL {} failed with error {}, retries left: {}",urlBuilder.build(),result.getMessage(),triesLeft);
+            result = getResponseBody(resultType, urlBuilder);
+            try {
+                Thread.sleep(1000);
+            } catch (InterruptedException e) {
+            }
+        }
+
+        return result;
     }
 
     private <Result> Response<Result> getResponseBody(TypeReference resultType, UrlBuilder urlBuilder) {
+
+        CloseableHttpResponse httpResponse = null;
 
         try {
             HttpGet request;
@@ -403,7 +431,7 @@ public class BittrexExchange  {
             request.addHeader("accept", "application/json");
 
             log.debug("Executing HTTP request: {}",request.toString());
-            HttpResponse httpResponse = httpClient.execute(request,httpClientContext);
+            httpResponse = (CloseableHttpResponse)httpClient.execute(request,httpClientContext);
 
             int responseCode = httpResponse.getStatusLine().getStatusCode();
             if(responseCode == 200) {
@@ -415,6 +443,16 @@ public class BittrexExchange  {
 
         } catch (NoSuchAlgorithmException | IOException | InvalidKeyException e) {
             return new Response<>(false,e.getMessage(),null);
+        } finally {
+
+            if(httpResponse != null){
+                try {
+                    httpResponse.getEntity().getContent().close();
+                    httpResponse.close();
+                } catch (IOException e) {
+                    log.debug("Failed to cleanup HttpResponse",e);
+                }
+            }
         }
     }
 }
