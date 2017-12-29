@@ -11,14 +11,15 @@
 
 package com.github.ccob.bittrex4j.dao;
 
-import com.fasterxml.jackson.annotation.*;
+import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonFormat;
+import com.fasterxml.jackson.annotation.JsonProperty;
 
-import java.time.Duration;
 import java.time.ZonedDateTime;
 
 public class Tick {
 
-    private ZonedDateTime endTime;
+    private ZonedDateTime startTime;
     private double open;
     private double high;
     private double low;
@@ -27,10 +28,10 @@ public class Tick {
     private double baseVolume;
 
     @JsonCreator
-    public Tick(@JsonProperty("T") @JsonFormat (shape = JsonFormat.Shape.STRING, pattern="yyyy-MM-dd'T'HH:mm:ss[.SSS][Z]", timezone="UTC") ZonedDateTime endTime,
+    public Tick(@JsonProperty("T") @JsonFormat (shape = JsonFormat.Shape.STRING, pattern="yyyy-MM-dd'T'HH:mm:ss[.SSS][Z]", timezone="UTC") ZonedDateTime startTime,
                 @JsonProperty("O") double open, @JsonProperty("H") double high, @JsonProperty("L") double low, @JsonProperty("C") double close,
                 @JsonProperty("V")double volume, @JsonProperty("BV") double baseVolume){
-        this.endTime = endTime;
+        this.startTime = startTime;
         this.open = open;
         this.high = high;
         this.low = low;
@@ -39,8 +40,8 @@ public class Tick {
         this.baseVolume = baseVolume;
     }
 
-    public ZonedDateTime getEndTime() {
-        return endTime;
+    public ZonedDateTime getStartTime() {
+        return startTime;
     }
 
     public double getOpen() {
