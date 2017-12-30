@@ -4,7 +4,7 @@
 
 
 ![bittrex4j Logo](docs/bittrex4j.png)  
-![Travis CI Status](https://travis-ci.org/CCob/bittrex4j.svg?branch=master) [![codecov](https://codecov.io/gh/CCob/bittrex4j/branch/master/graph/badge.svg)](https://codecov.io/gh/CCob/bittrex4j)  ![Maven Version](https://maven-badges.herokuapp.com/maven-central/com.github.ccob/bittrex4j/badge.svg)
+![Travis CI Status](https://travis-ci.org/CCob/bittrex4j.svg?branch=master) [![codecov](https://codecov.io/gh/CCob/bittrex4j/branch/master/graph/badge.svg)](https://codecov.io/gh/CCob/bittrex4j)  [![Maven metadata URI](https://img.shields.io/maven-metadata/v/http/central.maven.org/maven2/com/github/ccob/bittrex4j/maven-metadata.xml.svg)]()
 
 
 
