@@ -20,7 +20,7 @@ bittrex4j is published on the maven central repository and can be imported into 
 <dependency>
   <groupId>com.github.ccob</groupId>
   <artifactId>bittrex4j</artifactId>
-  <version>1.0.2</version>
+  <version>1.0.3</version>
 </dependency>
 ```
 
@@ -85,6 +85,7 @@ package com.github.ccob.bittrex4j.samples;
 
 import com.github.ccob.bittrex4j.BittrexExchange;
 import com.github.ccob.bittrex4j.dao.Fill;
+import org.java_websocket.WebSocketImpl;
 
 import java.io.IOException;
 import java.util.Arrays;
@@ -97,20 +98,31 @@ public class ShowRealTimeFills {
 
         BittrexExchange bittrexExchange = new BittrexExchange();
 
-        bittrexExchange.onUpdateExchangeState(updateExchangeState -> {
-            if(updateExchangeState.getFills().length > 0) {
-                double volume = Arrays.stream(updateExchangeState.getFills())
-                        .mapToDouble(Fill::getQuantity)
-                        .sum();
+        bittrexExchange.onUpdateSummaryState(exchangeSummaryState -> {
+            if (exchangeSummaryState.getDeltas().length > 0) {
 
-                System.out.println(String.format("%02f volume across %d fill(s) for %s", volume,
-                        updateExchangeState.getFills().length, updateExchangeState.getMarketName()));
+                Arrays.stream(exchangeSummaryState.getDeltas())
+                        .filter(marketSummary -> marketSummary.getMarketName().equals("BTC-BCC") || marketSummary.getMarketName().equals("BTC-ETH") )
+                        .forEach(marketSummary -> System.out.println(
+                                String.format("24 hour volume for market %s: %s",
+                                        marketSummary.getMarketName(),
+                                        marketSummary.getVolume().toString())));
             }
+        });
+
+        bittrexExchange.onUpdateExchangeState(updateExchangeState -> {
+            double volume = Arrays.stream(updateExchangeState.getFills())
+                    .mapToDouble(Fill::getQuantity)
+                    .sum();
+
+            System.out.println(String.format("N: %d, %02f volume across %d fill(s) for %s",updateExchangeState.getNounce(),
+                    volume, updateExchangeState.getFills().length, updateExchangeState.getMarketName()));
         });
 
         bittrexExchange.connectToWebSocket( () -> {
             bittrexExchange.subscribeToExchangeDeltas("BTC-ETH", null);
             bittrexExchange.subscribeToExchangeDeltas("BTC-BCC",null);
+            bittrexExchange.subscribeToMarketSummaries(null);
         });
 
         System.in.read();
@@ -138,7 +150,7 @@ public class PrintDepositHistory {
 
     public static void main(String[] args) throws IOException {
 
-        BittrexExchange bittrexExchange = new BittrexExchange(apikey,secret);
+        BittrexExchange bittrexExchange = new BittrexExchange(5, apikey,secret);
 
         Response<WithdrawalDeposit[]> markets = bittrexExchange.getDepositHistory("BTC");
 
@@ -163,4 +175,4 @@ Thanks to platelminto for the java-bittrex project and dparlevliet for the node.
 Donation welcome: 
   * BTC **1PXx92jaFZF92jLg64GF7APAsVCU4Tsogx**
   * UBQ **0xAa14EdE8541d1022121a39892821f271A9cdAF33**
-  * ETH **0xC7DC0CADbb497d3e11379c7A2aEE8b08bEc9F30b**
+  * ETH **0xC7DC0CADbb497d3e11379c7A2aEE8b08bEc9F30b**   
