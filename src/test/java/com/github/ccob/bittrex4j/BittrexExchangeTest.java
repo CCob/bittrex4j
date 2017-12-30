@@ -14,9 +14,10 @@ package com.github.ccob.bittrex4j;
 import com.github.ccob.bittrex4j.dao.*;
 import com.google.gson.Gson;
 import com.google.gson.internal.LinkedTreeMap;
-import donky.microsoft.aspnet.signalr.client.hubs.HubConnection;
-import donky.microsoft.aspnet.signalr.client.hubs.HubProxy;
-import donky.microsoft.aspnet.signalr.client.hubs.SubscriptionHandler1;
+
+import com.github.signalr4j.client.hubs.HubConnection;
+import com.github.signalr4j.client.hubs.HubProxy;
+import com.github.signalr4j.client.hubs.SubscriptionHandler1;
 import org.apache.http.HttpResponse;
 import org.apache.http.HttpStatus;
 import org.apache.http.ProtocolVersion;
@@ -26,9 +27,7 @@ import org.apache.http.client.methods.HttpGet;
 import org.apache.http.client.protocol.HttpClientContext;
 import org.apache.http.entity.BasicHttpEntity;
 import org.apache.http.impl.client.BasicCookieStore;
-import org.apache.http.message.BasicHttpResponse;
 import org.apache.http.message.BasicStatusLine;
-import org.apache.http.protocol.HTTP;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -116,7 +115,7 @@ public class BittrexExchangeTest {
         when(mockHttpFactory.createClientContext()).thenReturn(mockHttpClientContext);
         when(mockHttpFactory.createHubConnection(any(),any(),anyBoolean(),any())).thenReturn(mockHubConnection);
 
-        bittrexExchange = new BittrexExchange("apikey","secret", mockHttpFactory);
+        bittrexExchange = new BittrexExchange(0,"apikey","secret", mockHttpFactory);
         lambdaCalled = false;
     }
 

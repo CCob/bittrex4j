@@ -15,7 +15,7 @@ public class PrintDepositHistory {
 
     public static void main(String[] args) throws IOException {
 
-        BittrexExchange bittrexExchange = new BittrexExchange(apikey,secret);
+        BittrexExchange bittrexExchange = new BittrexExchange(5, apikey,secret);
 
         Response<WithdrawalDeposit[]> markets = bittrexExchange.getDepositHistory("BTC");
 

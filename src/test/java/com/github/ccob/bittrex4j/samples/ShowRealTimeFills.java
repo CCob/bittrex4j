@@ -2,6 +2,7 @@ package com.github.ccob.bittrex4j.samples;
 
 import com.github.ccob.bittrex4j.BittrexExchange;
 import com.github.ccob.bittrex4j.dao.Fill;
+import org.java_websocket.WebSocketImpl;
 
 import java.io.IOException;
 import java.util.Arrays;
@@ -14,20 +15,31 @@ public class ShowRealTimeFills {
 
         BittrexExchange bittrexExchange = new BittrexExchange();
 
-        bittrexExchange.onUpdateExchangeState(updateExchangeState -> {
-            if(updateExchangeState.getFills().length > 0) {
-                double volume = Arrays.stream(updateExchangeState.getFills())
-                        .mapToDouble(Fill::getQuantity)
-                        .sum();
+        bittrexExchange.onUpdateSummaryState(exchangeSummaryState -> {
+            if (exchangeSummaryState.getDeltas().length > 0) {
 
-                System.out.println(String.format("%02f volume across %d fill(s) for %s", volume,
-                        updateExchangeState.getFills().length, updateExchangeState.getMarketName()));
+                Arrays.stream(exchangeSummaryState.getDeltas())
+                        .filter(marketSummary -> marketSummary.getMarketName().equals("BTC-BCC") || marketSummary.getMarketName().equals("BTC-ETH") )
+                        .forEach(marketSummary -> System.out.println(
+                                String.format("24 hour volume for market %s: %s",
+                                        marketSummary.getMarketName(),
+                                        marketSummary.getVolume().toString())));
             }
+        });
+
+        bittrexExchange.onUpdateExchangeState(updateExchangeState -> {
+            double volume = Arrays.stream(updateExchangeState.getFills())
+                    .mapToDouble(Fill::getQuantity)
+                    .sum();
+
+            System.out.println(String.format("N: %d, %02f volume across %d fill(s) for %s",updateExchangeState.getNounce(),
+                    volume, updateExchangeState.getFills().length, updateExchangeState.getMarketName()));
         });
 
         bittrexExchange.connectToWebSocket( () -> {
             bittrexExchange.subscribeToExchangeDeltas("BTC-ETH", null);
             bittrexExchange.subscribeToExchangeDeltas("BTC-BCC",null);
+            bittrexExchange.subscribeToMarketSummaries(null);
         });
 
         System.in.read();

@@ -17,23 +17,19 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.module.SimpleModule;
 import com.github.ccob.bittrex4j.cloudflare.CloudFlareAuthorizer;
 import com.github.ccob.bittrex4j.dao.*;
-import com.github.ccob.bittrex4j.dao.Currency;
 import com.github.ccob.bittrex4j.listeners.InvocationResult;
 import com.github.ccob.bittrex4j.listeners.UpdateExchangeStateListener;
 import com.github.ccob.bittrex4j.listeners.UpdateSummaryStateListener;
+import com.github.signalr4j.client.Platform;
+import com.github.signalr4j.client.hubs.HubConnection;
+import com.github.signalr4j.client.hubs.HubProxy;
 import com.google.gson.Gson;
 import com.google.gson.internal.LinkedTreeMap;
-import donky.microsoft.aspnet.signalr.client.ConnectionState;
-import donky.microsoft.aspnet.signalr.client.Platform;
-import donky.microsoft.aspnet.signalr.client.hubs.HubConnection;
-import donky.microsoft.aspnet.signalr.client.hubs.HubProxy;
 import org.apache.http.HttpHeaders;
-import org.apache.http.HttpResponse;
-import org.apache.http.client.CookieStore;
 import org.apache.http.client.HttpClient;
+import org.apache.http.client.methods.CloseableHttpResponse;
 import org.apache.http.client.methods.HttpGet;
 import org.apache.http.client.protocol.HttpClientContext;
-import org.java_websocket.WebSocketImpl;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -44,7 +40,10 @@ import java.math.BigDecimal;
 import java.security.InvalidKeyException;
 import java.security.NoSuchAlgorithmException;
 import java.time.ZonedDateTime;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Timer;
+import java.util.TimerTask;
 import java.util.stream.Collectors;
 
 public class BittrexExchange  {
@@ -70,27 +69,46 @@ public class BittrexExchange  {
     private HttpClientContext httpClientContext;
     private HttpFactory httpFactory;
     private List<String> marketSubscriptions = new ArrayList<>();
-    private Timer reconnectMonitorTimer = new Timer();
-
     private Observable<UpdateExchangeState> updateExchangeStateBroker = new Observable<>();
     private Observable<ExchangeSummaryState> exchangeSummaryStateBroker = new Observable<>();
+    private Runnable connectedHandler;
 
-    JavaType updateExchangeStateType;
-    JavaType exchangeSummaryStateType;
+    private JavaType updateExchangeStateType;
+    private JavaType exchangeSummaryStateType;
+
+    private Timer reconnectTimer = new Timer();
+
+    private int retries;
+
+    private class ReconnectTimerTask extends TimerTask{
+        @Override
+        public void run() {
+            startConnection();
+        }
+    }
 
     public BittrexExchange() throws IOException {
-        this(null,null);
+        this(5);
     }
 
     public BittrexExchange(String apikey, String secret) throws IOException {
-        this(apikey,secret,new HttpFactory());
+        this(5,apikey,secret,new HttpFactory());
     }
 
-    public BittrexExchange(String apikey, String secret, HttpFactory httpFactory) throws IOException {
+    public BittrexExchange(int retries) throws IOException {
+        this(retries,null,null);
+    }
+
+    public BittrexExchange(int retries, String apikey, String secret) throws IOException {
+        this(retries,apikey,secret,new HttpFactory());
+    }
+
+    public BittrexExchange(int retries, String apikey, String secret, HttpFactory httpFactory) throws IOException {
 
         this.apikey = apikey;
         this.secret = secret;
         this.httpFactory = httpFactory;
+        this.retries = retries;
 
         mapper = new ObjectMapper();
         SimpleModule module = new SimpleModule();
@@ -102,27 +120,12 @@ public class BittrexExchange  {
 
         httpClient = httpFactory.createClient();
         httpClientContext = httpFactory.createClientContext();
-
-        performCloudFlareAuthorization();
-        log.debug("Bittrex Cookies: " + httpClientContext.getCookieStore());
     }
 
     private void performCloudFlareAuthorization() throws IOException {
 
-        CookieStore cookieStore = httpClientContext.getCookieStore();
-
-        if(cookieStore!=null) {
-            cookieStore.clearExpired(new Date());
-
-            if (httpClientContext.getCookieStore().getCookies()
-                    .stream()
-                    .anyMatch(cookie -> cookie.getName().equals("cf_clearance"))
-                    ) {
-                return;
-            }
-        }
-
         try {
+            httpClientContext = httpFactory.createClientContext();
             CloudFlareAuthorizer cloudFlareAuthorizer = new CloudFlareAuthorizer(httpClient,httpClientContext);
             cloudFlareAuthorizer.getAuthorizationResult("https://bittrex.com");
         } catch (ScriptException e) {
@@ -167,9 +170,19 @@ public class BittrexExchange  {
     }
 
 
-    public void subscribeToExchangeDeltas(String marketName, InvocationResult<? extends Object> invocationResult) {
-        hubProxy.invoke("subscribeToExchangeDeltas", marketName)
-                .done(result -> marketSubscriptions.add(marketName));
+    public void subscribeToExchangeDeltas(String marketName, InvocationResult<Boolean> invocationResult) {
+        hubProxy.invoke(Boolean.class,"subscribeToExchangeDeltas", marketName)
+                .done(result -> {
+                    marketSubscriptions.add(marketName);
+                    if(invocationResult != null) {
+                        invocationResult.complete(result);
+                    }
+                });
+    }
+
+    public void subscribeToMarketSummaries(InvocationResult<Boolean> invocationResult) {
+        hubProxy.invoke(Boolean.class, "SubscribeToSummaryDeltas")
+                .done(result -> {if(invocationResult != null) invocationResult.complete(result);});
     }
 
     public void queryExchangeState(String marketName,UpdateExchangeStateListener updateExchangeStateListener){
@@ -182,46 +195,48 @@ public class BittrexExchange  {
         hubConnection.stop();
     }
 
-    public void connectToWebSocket(Runnable connectedHandler) {
+    private void startConnection(){
+        try {
 
-        hubConnection = httpFactory.createHubConnection("https://socket.bittrex.com",null,true,
-                new SignalRLoggerDecorator(log_sockets));
+            hubConnection = httpFactory.createHubConnection("https://socket.bittrex.com",null,true,
+                    new SignalRLoggerDecorator(log_sockets));
 
-        hubProxy = hubConnection.createHubProxy("CoreHub");
-        hubConnection.connected(connectedHandler);
-        
-        registerForEvent("updateSummaryState", exchangeSummaryStateType,exchangeSummaryStateBroker);
-        registerForEvent("updateExchangeState", updateExchangeStateType,updateExchangeStateBroker);
+            hubProxy = hubConnection.createHubProxy("CoreHub");
+            hubConnection.connected(connectedHandler);
 
-        hubConnection.reconnected(() ->
-                marketSubscriptions.forEach(marketSubscription ->
-                        subscribeToExchangeDeltas(marketSubscription,null)));
+            registerForEvent("updateSummaryState", exchangeSummaryStateType,exchangeSummaryStateBroker);
+            registerForEvent("updateExchangeState", updateExchangeStateType,updateExchangeStateBroker);
 
-        hubConnection.stateChanged((oldState, newState) -> {
-            if(newState== ConnectionState.Reconnecting){
-                reconnectMonitorTimer.schedule(new TimerTask() {
-                    @Override
-                    public void run() {
-                        log.info("Hub connection state: {}",hubConnection.getState());
-                        if(hubConnection.getState()==ConnectionState.Reconnecting || hubConnection.getState() == ConnectionState.Disconnected){
-                            hubConnection.disconnect();
-                            try {
-                                performCloudFlareAuthorization();
-                            } catch (IOException e) {
-                                hubConnection.start();
-                                log.error("Failed to perform CloudFlare authorization on reconnect", e);
-                            }
-                        }else{
-                            cancel();
-                        }
-                    }
-                }, 10000, 10000);
+            setupErrorHandler();
+
+            performCloudFlareAuthorization();
+            prepareHubConnectionForCloudFlare();
+
+            hubConnection.start();
+
+        } catch (IOException e) {
+            if(log.isDebugEnabled()){
+                log.error("Failed to perform CloudFlare authorization on startup", e);
+            } else {
+                log.error("Failed to perform CloudFlare authorization on startup: {}", e.getMessage());
             }
-        });
+            reconnectTimer.schedule(new ReconnectTimerTask(),5000);
+        }
+    }
 
-        prepareHubConnectionForCloudFlare();
-        hubConnection.error( er -> log.error("Error: " + er.toString()));
-        hubConnection.start();
+    private void setupErrorHandler(){
+        hubConnection.error( er -> {
+            //we must clear this error handler in case another error arrives on the
+            //same hubConnection causing multiple reconnect timers to fire
+            hubConnection.error(null);
+            reconnectTimer.schedule(new ReconnectTimerTask(),5000);
+            log.error("Error: " + er.toString() + ", attempting reconnect in 5 seconds");
+        });
+    }
+
+    public void connectToWebSocket(Runnable connectedHandler) throws IOException {
+        this.connectedHandler = connectedHandler;
+        startConnection();
     }
 
     public Response<Tick[]> getTicks(String market, Interval tickInterval){
@@ -243,7 +258,7 @@ public class BittrexExchange  {
     public Response<MarketSummary> getMarketSummary(String market) {
         return getResponse(new TypeReference<Response<MarketSummary>>(){}, UrlBuilder.v2()
                 .withGroup(MARKET)
-                .withMethod("getmarketsumary")
+                .withMethod("getmarketsummary")
                 .withArgument("marketname",market));
     }
 
@@ -380,10 +395,25 @@ public class BittrexExchange  {
     }
 
     private <Result> Response<Result> getResponse(TypeReference resultType, UrlBuilder urlBuilder) {
-        return getResponseBody(resultType, urlBuilder);
+
+        int triesLeft = retries;
+        Response<Result> result = getResponseBody(resultType, urlBuilder);
+
+        while(!result.isSuccess() && triesLeft-- > 0){
+            log.warn("Request to URL {} failed with error {}, retries left: {}",urlBuilder.build(),result.getMessage(),triesLeft);
+            result = getResponseBody(resultType, urlBuilder);
+            try {
+                Thread.sleep(1000);
+            } catch (InterruptedException e) {
+            }
+        }
+
+        return result;
     }
 
     private <Result> Response<Result> getResponseBody(TypeReference resultType, UrlBuilder urlBuilder) {
+
+        CloseableHttpResponse httpResponse = null;
 
         try {
             HttpGet request;
@@ -401,7 +431,7 @@ public class BittrexExchange  {
             request.addHeader("accept", "application/json");
 
             log.debug("Executing HTTP request: {}",request.toString());
-            HttpResponse httpResponse = httpClient.execute(request,httpClientContext);
+            httpResponse = (CloseableHttpResponse)httpClient.execute(request,httpClientContext);
 
             int responseCode = httpResponse.getStatusLine().getStatusCode();
             if(responseCode == 200) {
@@ -413,6 +443,16 @@ public class BittrexExchange  {
 
         } catch (NoSuchAlgorithmException | IOException | InvalidKeyException e) {
             return new Response<>(false,e.getMessage(),null);
+        } finally {
+
+            if(httpResponse != null){
+                try {
+                    httpResponse.getEntity().getContent().close();
+                    httpResponse.close();
+                } catch (IOException e) {
+                    log.debug("Failed to cleanup HttpResponse",e);
+                }
+            }
         }
     }
 }
