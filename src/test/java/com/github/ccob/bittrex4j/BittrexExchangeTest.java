@@ -256,6 +256,21 @@ public class BittrexExchangeTest {
     }
 
     @Test
+    public void shouldReturnOpenOrders() throws IOException{
+        setExpectationForJsonResultOnWebAPICall(loadTestResourceAsString("/OpenOrders.json"));
+        Response<Order[]> result = bittrexExchange.getOpenOrders("ANY");
+
+        assertThat(result.isSuccess(), is(true));
+        assertThat(result.getResult().length, equalTo(3));
+
+        setExpectationForJsonResultOnWebAPICall(loadTestResourceAsString("/OpenOrders.json"));
+        result = bittrexExchange.getOpenOrders();
+
+        assertThat(result.isSuccess(), is(true));
+        assertThat(result.getResult().length, equalTo(3));
+    }
+
+    @Test
     public void shouldReturnBalances() throws IOException{
         setExpectationForJsonResultOnWebAPICall(loadTestResourceAsString("/Balances.json"));
         Response<Balance[]> result = bittrexExchange.getBalances();

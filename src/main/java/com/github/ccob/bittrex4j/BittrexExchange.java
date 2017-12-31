@@ -35,7 +35,6 @@ import org.slf4j.LoggerFactory;
 
 import javax.script.ScriptException;
 import java.io.IOException;
-import java.io.InputStreamReader;
 import java.math.BigDecimal;
 import java.security.InvalidKeyException;
 import java.security.NoSuchAlgorithmException;
@@ -276,6 +275,21 @@ public class BittrexExchange  {
                 .withArgument("marketname",market));
     }
 
+    public Response<Order[]> getOpenOrders(String market){
+        return getResponse(new TypeReference<Response<Order[]>>(){}, UrlBuilder.v1_1()
+                .withApiKey(apikey,secret)
+                .withGroup(MARKET)
+                .withMethod("getopenorders")
+                .withArgument("marketname",market));
+    }
+
+    public Response<Order[]> getOpenOrders(){
+        return getResponse(new TypeReference<Response<Order[]>>(){}, UrlBuilder.v1_1()
+                .withApiKey(apikey,secret)
+                .withGroup(MARKET)
+                .withMethod("getopenorders"));
+    }
+
     public Response<MarketSummaryResult[]> getMarketSummaries() {
         return getResponse(new TypeReference<Response<MarketSummaryResult[]>>(){}, UrlBuilder.v2()
                 .withGroup(MARKETS)
@@ -435,7 +449,9 @@ public class BittrexExchange  {
 
             int responseCode = httpResponse.getStatusLine().getStatusCode();
             if(responseCode == 200) {
-                return mapper.readerFor(resultType).readValue(new InputStreamReader(httpResponse.getEntity().getContent(),"UTF-8"));
+                String json = Utils.convertStreamToString(httpResponse.getEntity().getContent());
+                log.trace("REST JSON result: {}",json);
+                return mapper.readerFor(resultType).readValue(json);
             }else{
                 log.warn("HTTP request failed with error code {} and reason {}",responseCode,httpResponse.getStatusLine().getReasonPhrase());
                 return new Response<>(false,httpResponse.getStatusLine().getReasonPhrase(),null);
