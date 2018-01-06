@@ -45,7 +45,7 @@ import java.util.Timer;
 import java.util.TimerTask;
 import java.util.stream.Collectors;
 
-public class BittrexExchange  {
+public class BittrexExchange implements AutoCloseable {
 
     public enum Interval{
         oneMin,
@@ -143,9 +143,8 @@ public class BittrexExchange  {
     }
 
     @Override
-    protected void finalize() throws Throwable {
+    public void close() throws IOException {
         disconnectFromWebSocket();
-        super.finalize();
     }
 
     public void onUpdateSummaryState(UpdateSummaryStateListener exchangeSummaryState){
