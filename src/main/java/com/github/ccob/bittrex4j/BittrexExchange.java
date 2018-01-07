@@ -18,6 +18,7 @@ import com.fasterxml.jackson.databind.module.SimpleModule;
 import com.github.ccob.bittrex4j.cloudflare.CloudFlareAuthorizer;
 import com.github.ccob.bittrex4j.dao.*;
 import com.github.ccob.bittrex4j.listeners.InvocationResult;
+import com.github.ccob.bittrex4j.listeners.Listener;
 import com.github.ccob.bittrex4j.listeners.UpdateExchangeStateListener;
 import com.github.ccob.bittrex4j.listeners.UpdateSummaryStateListener;
 import com.github.signalr4j.client.Platform;
@@ -70,6 +71,7 @@ public class BittrexExchange implements AutoCloseable {
     private List<String> marketSubscriptions = new ArrayList<>();
     private Observable<UpdateExchangeState> updateExchangeStateBroker = new Observable<>();
     private Observable<ExchangeSummaryState> exchangeSummaryStateBroker = new Observable<>();
+    private Observable<Throwable> websockerErrorListener = new Observable<>();
     private Runnable connectedHandler;
 
     private JavaType updateExchangeStateType;
@@ -155,6 +157,10 @@ public class BittrexExchange implements AutoCloseable {
         updateExchangeStateBroker.addObserver(listener);
     }
 
+    public void onWebsocketError(Listener<Throwable> listener){
+        websockerErrorListener.addObserver(listener);
+    }
+
     @SuppressWarnings("unchecked")
     private  void registerForEvent(String eventName, JavaType deltasType, Observable broker){
         hubProxy.on(eventName, deltas -> {
@@ -224,6 +230,7 @@ public class BittrexExchange implements AutoCloseable {
 
     private void setupErrorHandler(){
         hubConnection.error( er -> {
+            websockerErrorListener.notifyObservers(er);
             //we must clear this error handler in case another error arrives on the
             //same hubConnection causing multiple reconnect timers to fire
             hubConnection.error(null);
