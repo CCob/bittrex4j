@@ -39,11 +39,14 @@ package com.github.ccob.bittrex4j.dao;
 //        }
 
 
+import com.fasterxml.jackson.annotation.JsonAlias;
 import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
 import java.time.ZonedDateTime;
 
+@JsonIgnoreProperties("Uuid")
 public class Order {
     private String accountId;
     private String orderUuid;
@@ -71,7 +74,7 @@ public class Order {
 
     @JsonCreator
     public Order(@JsonProperty("AccountId") String accountId, @JsonProperty("OrderUuid") String orderUuid,
-                 @JsonProperty("Exchange") String exchange, @JsonProperty("Type") String type,
+                 @JsonProperty("Exchange") String exchange, @JsonProperty("Type") @JsonAlias("OrderType") String type,
                  @JsonProperty("Quantity") double quantity, @JsonProperty("QuantityRemaining") double quantityRemaining,
                  @JsonProperty("Limit") double limit, @JsonProperty("Reserved") double reserved,
                  @JsonProperty("ReserveRemaining") double reserveRemaining, @JsonProperty("CommissionReserved") double commissionReserved,
@@ -172,7 +175,7 @@ public class Order {
     }
 
     public boolean isOpen() {
-        return open;
+        return open || closed == null;
     }
 
     public String getSentinel() {

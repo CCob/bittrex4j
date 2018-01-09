@@ -18,6 +18,7 @@ import com.fasterxml.jackson.databind.module.SimpleModule;
 import com.github.ccob.bittrex4j.cloudflare.CloudFlareAuthorizer;
 import com.github.ccob.bittrex4j.dao.*;
 import com.github.ccob.bittrex4j.listeners.InvocationResult;
+import com.github.ccob.bittrex4j.listeners.Listener;
 import com.github.ccob.bittrex4j.listeners.UpdateExchangeStateListener;
 import com.github.ccob.bittrex4j.listeners.UpdateSummaryStateListener;
 import com.github.signalr4j.client.Platform;
@@ -35,7 +36,6 @@ import org.slf4j.LoggerFactory;
 
 import javax.script.ScriptException;
 import java.io.IOException;
-import java.io.InputStreamReader;
 import java.math.BigDecimal;
 import java.security.InvalidKeyException;
 import java.security.NoSuchAlgorithmException;
@@ -46,7 +46,7 @@ import java.util.Timer;
 import java.util.TimerTask;
 import java.util.stream.Collectors;
 
-public class BittrexExchange  {
+public class BittrexExchange implements AutoCloseable {
 
     public enum Interval{
         oneMin,
@@ -71,6 +71,7 @@ public class BittrexExchange  {
     private List<String> marketSubscriptions = new ArrayList<>();
     private Observable<UpdateExchangeState> updateExchangeStateBroker = new Observable<>();
     private Observable<ExchangeSummaryState> exchangeSummaryStateBroker = new Observable<>();
+    private Observable<Throwable> websockerErrorListener = new Observable<>();
     private Runnable connectedHandler;
 
     private JavaType updateExchangeStateType;
@@ -144,9 +145,8 @@ public class BittrexExchange  {
     }
 
     @Override
-    protected void finalize() throws Throwable {
+    public void close() throws IOException {
         disconnectFromWebSocket();
-        super.finalize();
     }
 
     public void onUpdateSummaryState(UpdateSummaryStateListener exchangeSummaryState){
@@ -155,6 +155,10 @@ public class BittrexExchange  {
 
     public void onUpdateExchangeState(UpdateExchangeStateListener listener){
         updateExchangeStateBroker.addObserver(listener);
+    }
+
+    public void onWebsocketError(Listener<Throwable> listener){
+        websockerErrorListener.addObserver(listener);
     }
 
     @SuppressWarnings("unchecked")
@@ -226,6 +230,7 @@ public class BittrexExchange  {
 
     private void setupErrorHandler(){
         hubConnection.error( er -> {
+            websockerErrorListener.notifyObservers(er);
             //we must clear this error handler in case another error arrives on the
             //same hubConnection causing multiple reconnect timers to fire
             hubConnection.error(null);
@@ -274,6 +279,21 @@ public class BittrexExchange  {
                 .withGroup(MARKET)
                 .withMethod("getmarkethistory")
                 .withArgument("marketname",market));
+    }
+
+    public Response<Order[]> getOpenOrders(String market){
+        return getResponse(new TypeReference<Response<Order[]>>(){}, UrlBuilder.v1_1()
+                .withApiKey(apikey,secret)
+                .withGroup(MARKET)
+                .withMethod("getopenorders")
+                .withArgument("marketname",market));
+    }
+
+    public Response<Order[]> getOpenOrders(){
+        return getResponse(new TypeReference<Response<Order[]>>(){}, UrlBuilder.v1_1()
+                .withApiKey(apikey,secret)
+                .withGroup(MARKET)
+                .withMethod("getopenorders"));
     }
 
     public Response<MarketSummaryResult[]> getMarketSummaries() {
@@ -435,7 +455,9 @@ public class BittrexExchange  {
 
             int responseCode = httpResponse.getStatusLine().getStatusCode();
             if(responseCode == 200) {
-                return mapper.readerFor(resultType).readValue(new InputStreamReader(httpResponse.getEntity().getContent(),"UTF-8"));
+                String json = Utils.convertStreamToString(httpResponse.getEntity().getContent());
+                log.trace("REST JSON result: {}",json);
+                return mapper.readerFor(resultType).readValue(json);
             }else{
                 log.warn("HTTP request failed with error code {} and reason {}",responseCode,httpResponse.getStatusLine().getReasonPhrase());
                 return new Response<>(false,httpResponse.getStatusLine().getReasonPhrase(),null);

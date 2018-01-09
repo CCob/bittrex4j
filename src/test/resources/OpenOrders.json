@@ -1,0 +1,62 @@
+{
+  "success": true,
+  "message": "",
+  "result": [
+    {
+      "Uuid": null,
+      "OrderUuid": "6192046d-b5ba-42ad-b40a-9098343e1bf2",
+      "Exchange": "BTC-UBQ",
+      "OrderType": "LIMIT_SELL",
+      "Quantity": 10.00000000,
+      "QuantityRemaining": 10.00000000,
+      "Limit": 0.00082502,
+      "CommissionPaid": 0.00000000,
+      "Price": 0.00000000,
+      "PricePerUnit": null,
+      "Opened": "2017-12-31T10:31:53.723",
+      "Closed": null,
+      "CancelInitiated": false,
+      "ImmediateOrCancel": false,
+      "IsConditional": false,
+      "Condition": "NONE",
+      "ConditionTarget": null
+    },
+    {
+      "Uuid" : null,
+      "OrderUuid" : "09aa5bb6-8232-41aa-9b78-a5a1093e0211",
+      "Exchange" : "BTC-LTC",
+      "OrderType" : "LIMIT_SELL",
+      "Quantity" : 5.00000000,
+      "QuantityRemaining" : 5.00000000,
+      "Limit" : 2.00000000,
+      "CommissionPaid" : 0.00000000,
+      "Price" : 0.00000000,
+      "PricePerUnit" : null,
+      "Opened" : "2014-07-09T03:55:48.77",
+      "Closed" : null,
+      "CancelInitiated" : false,
+      "ImmediateOrCancel" : false,
+      "IsConditional" : false,
+      "Condition" : null,
+      "ConditionTarget" : null
+    }, {
+      "Uuid" : null,
+      "OrderUuid" : "8925d746-bc9f-4684-b1aa-e507467aaa99",
+      "Exchange" : "BTC-LTC",
+      "OrderType" : "LIMIT_BUY",
+      "Quantity" : 100000.00000000,
+      "QuantityRemaining" : 100000.00000000,
+      "Limit" : 0.00000001,
+      "CommissionPaid" : 0.00000000,
+      "Price" : 0.00000000,
+      "PricePerUnit" : null,
+      "Opened" : "2014-07-09T03:55:48.583",
+      "Closed" : null,
+      "CancelInitiated" : false,
+      "ImmediateOrCancel" : false,
+      "IsConditional" : false,
+      "Condition" : null,
+      "ConditionTarget" : null
+    }
+  ]
+}
