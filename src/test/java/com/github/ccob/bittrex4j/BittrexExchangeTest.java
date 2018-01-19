@@ -149,7 +149,7 @@ public class BittrexExchangeTest {
     @Test
     public void shouldReturnErrorResultOnNon2xxCode() throws IOException {
         setExpectationForNon2xxErrorOnWebAPICall();
-        Response<Market[]> result = bittrexExchange.getMarkets();
+        Response<MarketSummaryResult[]> result = bittrexExchange.getMarketSummaries();
 
         assertThat(result.isSuccess(), is(false));
         assertThat(result.getMessage(), equalTo(NOT_FOUND));
@@ -158,7 +158,7 @@ public class BittrexExchangeTest {
     @Test
     public void shouldReturnErrorResultOnException() throws IOException {
         setExpectationForExceptionOnWebAPICall();
-        Response<Market[]> result = bittrexExchange.getMarkets();
+        Response<MarketSummaryResult[]> result = bittrexExchange.getMarketSummaries();
 
         assertThat(result.isSuccess(), is(false));
         assertThat(result.getMessage(), equalTo(IO_ERROR));
@@ -248,11 +248,11 @@ public class BittrexExchangeTest {
 
     @Test
     public void shouldReturnOrderHistory() throws IOException{
-        setExpectationForJsonResultOnWebAPICall(loadTestResourceAsString("/MarketOrderHistory.json"));
-        Response<CompletedOrder[]> result = bittrexExchange.getOrderHistory("ANY");
+        setExpectationForJsonResultOnWebAPICall(loadTestResourceAsString("/OpenOrders.json"));
+        Response<Order[]> result = bittrexExchange.getOrderHistory("ANY");
 
         assertThat(result.isSuccess(), is(true));
-        assertThat(result.getResult().length, equalTo(2));
+        assertThat(result.getResult().length, equalTo(3));
     }
 
     @Test
