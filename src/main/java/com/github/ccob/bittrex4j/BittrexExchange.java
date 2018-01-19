@@ -269,10 +269,10 @@ public class BittrexExchange  {
     }
 
     public Response<CompletedOrder[]> getMarketHistory(String market) {
-        return getResponse(new TypeReference<Response<CompletedOrder[]>>(){}, UrlBuilder.v2()
-                .withGroup(MARKET)
+        return getResponse(new TypeReference<Response<CompletedOrder[]>>(){}, UrlBuilder.v1_1()
+                .withGroup(PUBLIC)
                 .withMethod("getmarkethistory")
-                .withArgument("marketname",market));
+                .withArgument("market",market));
     }
 
     public Response<Order[]> getOpenOrders(String market){
