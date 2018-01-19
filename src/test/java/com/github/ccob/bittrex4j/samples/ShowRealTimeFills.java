@@ -2,7 +2,6 @@ package com.github.ccob.bittrex4j.samples;
 
 import com.github.ccob.bittrex4j.BittrexExchange;
 import com.github.ccob.bittrex4j.dao.Fill;
-import org.java_websocket.WebSocketImpl;
 
 import java.io.IOException;
 import java.util.Arrays;
@@ -13,36 +12,38 @@ public class ShowRealTimeFills {
 
         System.out.println("Press any key to quit");
 
-        BittrexExchange bittrexExchange = new BittrexExchange();
+        try(BittrexExchange bittrexExchange = new BittrexExchange()) {
 
-        bittrexExchange.onUpdateSummaryState(exchangeSummaryState -> {
-            if (exchangeSummaryState.getDeltas().length > 0) {
+            bittrexExchange.onUpdateSummaryState(exchangeSummaryState -> {
+                if (exchangeSummaryState.getDeltas().length > 0) {
 
-                Arrays.stream(exchangeSummaryState.getDeltas())
-                        .filter(marketSummary -> marketSummary.getMarketName().equals("BTC-BCC") || marketSummary.getMarketName().equals("BTC-ETH") )
-                        .forEach(marketSummary -> System.out.println(
-                                String.format("24 hour volume for market %s: %s",
-                                        marketSummary.getMarketName(),
-                                        marketSummary.getVolume().toString())));
-            }
-        });
+                    Arrays.stream(exchangeSummaryState.getDeltas())
+                            .filter(marketSummary -> marketSummary.getMarketName().equals("BTC-BCC") || marketSummary.getMarketName().equals("BTC-ETH"))
+                            .forEach(marketSummary -> System.out.println(
+                                    String.format("24 hour volume for market %s: %s",
+                                            marketSummary.getMarketName(),
+                                            marketSummary.getVolume().toString())));
+                }
+            });
 
-        bittrexExchange.onUpdateExchangeState(updateExchangeState -> {
-            double volume = Arrays.stream(updateExchangeState.getFills())
-                    .mapToDouble(Fill::getQuantity)
-                    .sum();
+            bittrexExchange.onUpdateExchangeState(updateExchangeState -> {
+                double volume = Arrays.stream(updateExchangeState.getFills())
+                        .mapToDouble(Fill::getQuantity)
+                        .sum();
 
-            System.out.println(String.format("N: %d, %02f volume across %d fill(s) for %s",updateExchangeState.getNounce(),
-                    volume, updateExchangeState.getFills().length, updateExchangeState.getMarketName()));
-        });
+                System.out.println(String.format("N: %d, %02f volume across %d fill(s) for %s", updateExchangeState.getNounce(),
+                        volume, updateExchangeState.getFills().length, updateExchangeState.getMarketName()));
+            });
 
-        bittrexExchange.connectToWebSocket( () -> {
-            bittrexExchange.subscribeToExchangeDeltas("BTC-ETH", null);
-            bittrexExchange.subscribeToExchangeDeltas("BTC-BCC",null);
-            bittrexExchange.subscribeToMarketSummaries(null);
-        });
+            bittrexExchange.connectToWebSocket(() -> {
+                bittrexExchange.subscribeToExchangeDeltas("BTC-ETH", null);
+                bittrexExchange.subscribeToExchangeDeltas("BTC-BCC", null);
+                bittrexExchange.subscribeToMarketSummaries(null);
+            });
 
-        System.in.read();
-        bittrexExchange.disconnectFromWebSocket();
+            System.in.read();
+        }
+
+        System.out.println("Closing websocket and exiting");
     }
 }
