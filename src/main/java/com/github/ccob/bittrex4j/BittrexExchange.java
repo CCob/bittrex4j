@@ -314,12 +314,12 @@ public class BittrexExchange  {
                 .withMethod("getwallethealth"));
     }
 
-    public Response<CompletedOrder[]> getOrderHistory(String market) {
-        return getResponse(new TypeReference<Response<CompletedOrder[]>>(){}, UrlBuilder.v1_1()
+    public Response<Order[]> getOrderHistory(String market) {
+        return getResponse(new TypeReference<Response<Order[]>>(){}, UrlBuilder.v1_1()
                 .withApiKey(apikey,secret)
                 .withGroup(ACCOUNT)
                 .withMethod("getorderhistory")
-                .withArgument("marketname",market));
+                .withArgument("market",market));
     }
 
     public Response<Balance[]> getBalances() {
