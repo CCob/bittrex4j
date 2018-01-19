@@ -58,7 +58,7 @@ public class BittrexExchange  {
     private static Logger log = LoggerFactory.getLogger(BittrexExchange.class);
     private static Logger log_sockets = LoggerFactory.getLogger(BittrexExchange.class.getName().concat(".WebSockets"));
 
-    private final String MARKET = "market", MARKETS = "markets", CURRENCY = "currency", CURRENCIES = "currencies", ACCOUNT = "account";
+    private final String MARKET = "market", MARKETS = "markets", CURRENCY = "currency", CURRENCIES = "currencies", ACCOUNT = "account", PUBLIC="public";
     private String apikey = "";
     private String secret = "";
     private ObjectMapper mapper;
@@ -297,8 +297,8 @@ public class BittrexExchange  {
     }
 
     public Response<Market[]> getMarkets() {
-        return getResponse(new TypeReference<Response<Market[]>>(){}, UrlBuilder.v2()
-                .withGroup(MARKETS)
+        return getResponse(new TypeReference<Response<Market[]>>(){}, UrlBuilder.v1_1()
+                .withGroup(PUBLIC)
                 .withMethod("getmarkets"));
     }
 
