@@ -59,7 +59,7 @@ public class BittrexExchange implements AutoCloseable {
     private static Logger log = LoggerFactory.getLogger(BittrexExchange.class);
     private static Logger log_sockets = LoggerFactory.getLogger(BittrexExchange.class.getName().concat(".WebSockets"));
 
-    private final String MARKET = "market", MARKETS = "markets", CURRENCY = "currency", CURRENCIES = "currencies", ACCOUNT = "account";
+    private final String MARKET = "market", MARKETS = "markets", CURRENCY = "currency", CURRENCIES = "currencies", ACCOUNT = "account", PUBLIC="public";
     private String apikey = "";
     private String secret = "";
     private ObjectMapper mapper;
@@ -275,10 +275,10 @@ public class BittrexExchange implements AutoCloseable {
     }
 
     public Response<CompletedOrder[]> getMarketHistory(String market) {
-        return getResponse(new TypeReference<Response<CompletedOrder[]>>(){}, UrlBuilder.v2()
-                .withGroup(MARKET)
+        return getResponse(new TypeReference<Response<CompletedOrder[]>>(){}, UrlBuilder.v1_1()
+                .withGroup(PUBLIC)
                 .withMethod("getmarkethistory")
-                .withArgument("marketname",market));
+                .withArgument("market",market));
     }
 
     public Response<Order[]> getOpenOrders(String market){
@@ -303,8 +303,8 @@ public class BittrexExchange implements AutoCloseable {
     }
 
     public Response<Market[]> getMarkets() {
-        return getResponse(new TypeReference<Response<Market[]>>(){}, UrlBuilder.v2()
-                .withGroup(MARKETS)
+        return getResponse(new TypeReference<Response<Market[]>>(){}, UrlBuilder.v1_1()
+                .withGroup(PUBLIC)
                 .withMethod("getmarkets"));
     }
 
@@ -320,12 +320,12 @@ public class BittrexExchange implements AutoCloseable {
                 .withMethod("getwallethealth"));
     }
 
-    public Response<CompletedOrder[]> getOrderHistory(String market) {
-        return getResponse(new TypeReference<Response<CompletedOrder[]>>(){}, UrlBuilder.v1_1()
+    public Response<Order[]> getOrderHistory(String market) {
+        return getResponse(new TypeReference<Response<Order[]>>(){}, UrlBuilder.v1_1()
                 .withApiKey(apikey,secret)
                 .withGroup(ACCOUNT)
                 .withMethod("getorderhistory")
-                .withArgument("marketname",market));
+                .withArgument("market",market));
     }
 
     public Response<Balance[]> getBalances() {

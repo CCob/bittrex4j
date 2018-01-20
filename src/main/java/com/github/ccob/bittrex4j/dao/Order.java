@@ -78,9 +78,9 @@ public class Order {
                  @JsonProperty("Quantity") double quantity, @JsonProperty("QuantityRemaining") double quantityRemaining,
                  @JsonProperty("Limit") double limit, @JsonProperty("Reserved") double reserved,
                  @JsonProperty("ReserveRemaining") double reserveRemaining, @JsonProperty("CommissionReserved") double commissionReserved,
-                 @JsonProperty("CommissionReserveRemaining") double commissionReserveRemaining, @JsonProperty("CommissionPaid") double commissionPaid,
+                 @JsonProperty("CommissionReserveRemaining") double commissionReserveRemaining, @JsonProperty("CommissionPaid") @JsonAlias("Commission") double commissionPaid,
                  @JsonProperty("Price") double price, @JsonProperty("PricePerUnit") double pricePerUnit,
-                 @JsonProperty("Opened") ZonedDateTime opened, @JsonProperty("Closed") ZonedDateTime closed,
+                 @JsonProperty("Opened") @JsonAlias("TimeStamp") ZonedDateTime opened, @JsonProperty("Closed") ZonedDateTime closed,
                  @JsonProperty("IsOpen") boolean open, @JsonProperty("Sentinel") String sentinel,
                  @JsonProperty("CancelInitiated") boolean cancelInitiated, @JsonProperty("ImmediateOrCancel")boolean immediateOrCancel,
                  @JsonProperty("IsConditional") boolean conditional, @JsonProperty("Condition") String condition, @JsonProperty("ConditionTarget") String conditionTarget) {
