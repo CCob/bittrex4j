@@ -260,11 +260,22 @@ public class BittrexExchange implements AutoCloseable {
                 .withArgument("tickInterval",tickInterval.toString()));
     }
 
+    /**
+     * v2 version of getMarketSummary seems to return a different market than requested on occassion,
+     * so both v1 and v2 flavors are available
+     */
     public Response<MarketSummary> getMarketSummary(String market) {
         return getResponse(new TypeReference<Response<MarketSummary>>(){}, UrlBuilder.v2()
                 .withGroup(MARKET)
                 .withMethod("getmarketsummary")
                 .withArgument("marketname",market));
+    }
+    
+    public Response<MarketSummary[]> getMarketSummaryV1(String market) {
+        return getResponse(new TypeReference<Response<MarketSummary[]>>(){}, UrlBuilder.v1_1()
+                .withGroup(PUBLIC)
+                .withMethod("getmarketsummary")
+                .withArgument("market",market));
     }
 
     public Response<MarketOrdersResult> getMarketOrderBook(String market) {
