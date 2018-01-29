@@ -458,8 +458,8 @@ public class BittrexExchange implements AutoCloseable {
                 .withGroup(MARKET)
                 .withMethod("selllimit")
                 .withArgument("market",market)
-                .withArgument("quantity",String.format("%f",quantity))
-                .withArgument("rate",String.format("%f",rate)));
+                .withArgument("quantity",Double.toString(quantity))
+                .withArgument("rate",Double.toString(rate)));
     }
 
     public Response<?> cancel(String orderUuid){
