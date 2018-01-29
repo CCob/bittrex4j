@@ -17,6 +17,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.module.SimpleModule;
 import com.github.ccob.bittrex4j.cloudflare.CloudFlareAuthorizer;
 import com.github.ccob.bittrex4j.dao.*;
+import com.github.ccob.bittrex4j.dao.Currency;
 import com.github.ccob.bittrex4j.listeners.InvocationResult;
 import com.github.ccob.bittrex4j.listeners.Listener;
 import com.github.ccob.bittrex4j.listeners.UpdateExchangeStateListener;
@@ -40,10 +41,7 @@ import java.math.BigDecimal;
 import java.security.InvalidKeyException;
 import java.security.NoSuchAlgorithmException;
 import java.time.ZonedDateTime;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Timer;
-import java.util.TimerTask;
+import java.util.*;
 import java.util.stream.Collectors;
 
 public class BittrexExchange implements AutoCloseable {
@@ -58,8 +56,9 @@ public class BittrexExchange implements AutoCloseable {
 
     private static Logger log = LoggerFactory.getLogger(BittrexExchange.class);
     private static Logger log_sockets = LoggerFactory.getLogger(BittrexExchange.class.getName().concat(".WebSockets"));
+    private static final String MARKET = "market", MARKETS = "markets", CURRENCY = "currency", CURRENCIES = "currencies", ACCOUNT = "account", PUBLIC="public";
+    private static final List<String> terminalErrors = Arrays.asList("INSUFFICIENT_FUNDS","APIKEY_INVALID");
 
-    private final String MARKET = "market", MARKETS = "markets", CURRENCY = "currency", CURRENCIES = "currencies", ACCOUNT = "account", PUBLIC="public";
     private ApiKeySecret apiKeySecret;
     private ObjectMapper mapper;
     private HttpClient httpClient;
@@ -475,18 +474,26 @@ public class BittrexExchange implements AutoCloseable {
                 .withArgument("uuid",orderUuid));
     }
 
+    private boolean isTerminalError(String message){
+        return terminalErrors.contains(message);
+    }
+
     private <Result> Response<Result> getResponse(TypeReference resultType, UrlBuilder urlBuilder ) {
 
         int triesLeft = retries;
         Response<Result> result = getResponseBody(resultType, urlBuilder);
 
-        while(!result.isSuccess() && triesLeft-- > 0){
+        while(!result.isSuccess() && triesLeft-- > 0 && !isTerminalError(result.getMessage())){
             log.warn("Request to URL {} failed with error {}, retries left: {}",urlBuilder.build(),result.getMessage(),triesLeft);
             result = getResponseBody(resultType, urlBuilder);
             try {
                 Thread.sleep(1000);
             } catch (InterruptedException e) {
             }
+        }
+
+        if(!result.isSuccess()){
+            log.warn("Request to URL {} failed with error {}",urlBuilder.build(),result.getMessage());
         }
 
         return result;
