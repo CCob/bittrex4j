@@ -475,14 +475,14 @@ public class BittrexExchange implements AutoCloseable {
                 .withArgument("uuid",orderUuid));
     }
 
-    private <Result> Response<Result> getResponse(TypeReference resultType, UrlBuilder urlBuilder) {
+    private <Result> Response<Result> getResponse(TypeReference resultType, UrlBuilder urlBuilder ) {
 
         int triesLeft = retries;
-        Response<Result> result = getResponseBody(resultType, urlBuilder,apiKeySecret);
+        Response<Result> result = getResponseBody(resultType, urlBuilder);
 
         while(!result.isSuccess() && triesLeft-- > 0){
             log.warn("Request to URL {} failed with error {}, retries left: {}",urlBuilder.build(),result.getMessage(),triesLeft);
-            result = getResponseBody(resultType, urlBuilder,apiKeySecret);
+            result = getResponseBody(resultType, urlBuilder);
             try {
                 Thread.sleep(1000);
             } catch (InterruptedException e) {
@@ -492,7 +492,7 @@ public class BittrexExchange implements AutoCloseable {
         return result;
     }
 
-    private <Result> Response<Result> getResponseBody(TypeReference resultType, UrlBuilder urlBuilder, ApiKeySecret apiKeySecret) {
+    private <Result> Response<Result> getResponseBody(TypeReference resultType, UrlBuilder urlBuilder) {
 
         CloseableHttpResponse httpResponse = null;
 
@@ -501,10 +501,11 @@ public class BittrexExchange implements AutoCloseable {
             String url;
 
             if(urlBuilder.isSecure()) {
+                ApiKeySecret builderApiSecret = urlBuilder.getApiKeySecret();
                 urlBuilder.withArgument("nonce",EncryptionUtility.generateNonce());
                 url = urlBuilder.build();
                 request = new HttpGet(url);
-                request.addHeader("apisign", EncryptionUtility.calculateHash(apiKeySecret.getSecret(), url, "HmacSHA512")); // Attaches signature as a header
+                request.addHeader("apisign", EncryptionUtility.calculateHash(builderApiSecret.getSecret(), url, "HmacSHA512")); // Attaches signature as a header
             }else{
                 request = new HttpGet(urlBuilder.build());
             }
