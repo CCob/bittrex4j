@@ -222,7 +222,7 @@ public class BittrexExchange implements AutoCloseable {
             if(log.isDebugEnabled()){
                 log.error("Failed to perform CloudFlare authorization on startup", e);
             } else {
-                log.error("Failed to perform CloudFlare authorization on startup: {}", e.getMessage());
+                log.error("Failed to perform CloudFlare authorization on startup: {}", e.toString());
             }
             reconnectTimer.schedule(new ReconnectTimerTask(),5000);
         }
