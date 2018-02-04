@@ -10,18 +10,18 @@ import org.apache.http.client.methods.CloseableHttpResponse;
 import org.apache.http.client.methods.HttpGet;
 import org.apache.http.client.protocol.HttpClientContext;
 import org.apache.http.cookie.Cookie;
-import org.apache.http.impl.client.CloseableHttpClient;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import javax.script.ScriptEngine;
 import javax.script.ScriptEngineManager;
 import javax.script.ScriptException;
-import javax.swing.text.html.Option;
 import java.io.IOException;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.Optional;
+import java.util.Timer;
+import java.util.TimerTask;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
@@ -105,11 +105,21 @@ public class CloudFlareAuthorizer {
         if(referer != null)
             getRequest.setHeader(HttpHeaders.REFERER,referer);
 
+        int hardTimeout = 30; // seconds
+        TimerTask task = new TimerTask() {
+            @Override
+            public void run() {
+                getRequest.abort();
+            }
+        };
+        new Timer(true).schedule(task, hardTimeout * 1000);
+
         HttpResponse httpResponse = httpClient.execute(getRequest,httpClientContext);
 
         String responseText = Utils.convertStreamToString(httpResponse.getEntity().getContent());
         int httpStatus = httpResponse.getStatusLine().getStatusCode();
 
+        task.cancel();
         httpResponse.getEntity().getContent().close();
         ((CloseableHttpResponse)httpResponse).close();
         return new Response(httpStatus,responseText);

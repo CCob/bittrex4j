@@ -67,6 +67,10 @@ public class UrlBuilder {
         return this.apiKey != null && this.apiSecret != null;
     }
 
+    ApiKeySecret getApiKeySecret(){
+        return new ApiKeySecret(this.apiKey,this.apiSecret);
+    }
+
     String build(){
 
         String result = baseUrl;

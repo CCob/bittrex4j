@@ -17,6 +17,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.module.SimpleModule;
 import com.github.ccob.bittrex4j.cloudflare.CloudFlareAuthorizer;
 import com.github.ccob.bittrex4j.dao.*;
+import com.github.ccob.bittrex4j.dao.Currency;
 import com.github.ccob.bittrex4j.listeners.InvocationResult;
 import com.github.ccob.bittrex4j.listeners.Listener;
 import com.github.ccob.bittrex4j.listeners.UpdateExchangeStateListener;
@@ -40,10 +41,7 @@ import java.math.BigDecimal;
 import java.security.InvalidKeyException;
 import java.security.NoSuchAlgorithmException;
 import java.time.ZonedDateTime;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Timer;
-import java.util.TimerTask;
+import java.util.*;
 import java.util.stream.Collectors;
 
 public class BittrexExchange implements AutoCloseable {
@@ -58,10 +56,10 @@ public class BittrexExchange implements AutoCloseable {
 
     private static Logger log = LoggerFactory.getLogger(BittrexExchange.class);
     private static Logger log_sockets = LoggerFactory.getLogger(BittrexExchange.class.getName().concat(".WebSockets"));
+    private static final String MARKET = "market", MARKETS = "markets", CURRENCY = "currency", CURRENCIES = "currencies", ACCOUNT = "account", PUBLIC="public";
+    private static final List<String> terminalErrors = Arrays.asList("INSUFFICIENT_FUNDS","APIKEY_INVALID");
 
-    private final String MARKET = "market", MARKETS = "markets", CURRENCY = "currency", CURRENCIES = "currencies", ACCOUNT = "account";
-    private String apikey = "";
-    private String secret = "";
+    private ApiKeySecret apiKeySecret;
     private ObjectMapper mapper;
     private HttpClient httpClient;
     private HubConnection hubConnection;
@@ -106,8 +104,7 @@ public class BittrexExchange implements AutoCloseable {
 
     public BittrexExchange(int retries, String apikey, String secret, HttpFactory httpFactory) throws IOException {
 
-        this.apikey = apikey;
-        this.secret = secret;
+        this.apiKeySecret = new ApiKeySecret(apikey,secret);
         this.httpFactory = httpFactory;
         this.retries = retries;
 
@@ -189,11 +186,14 @@ public class BittrexExchange implements AutoCloseable {
                 .done(result -> {if(invocationResult != null) invocationResult.complete(result);});
     }
 
-    public void queryExchangeState(String marketName,UpdateExchangeStateListener updateExchangeStateListener){
-        hubProxy.invoke(LinkedTreeMap.class,"queryExchangeState",marketName)
-                .done(exchangeState -> updateExchangeStateListener
-                        .onEvent(mapper.readerFor(updateExchangeStateType).readValue(new Gson().toJson(exchangeState))));
-    }
+    public void queryExchangeState(String marketName, UpdateExchangeStateListener updateExchangeStateListener) {
+        hubProxy.invoke(LinkedTreeMap.class, "queryExchangeState", marketName)
+                .done(exchangeState -> {
+                  exchangeState.putIfAbsent("MarketName", marketName);
+                  updateExchangeStateListener
+                      .onEvent(mapper.readerFor(updateExchangeStateType).readValue(new Gson().toJson(exchangeState)));
+                });
+  }
 
     public void disconnectFromWebSocket(){
         hubConnection.stop();
@@ -222,7 +222,7 @@ public class BittrexExchange implements AutoCloseable {
             if(log.isDebugEnabled()){
                 log.error("Failed to perform CloudFlare authorization on startup", e);
             } else {
-                log.error("Failed to perform CloudFlare authorization on startup: {}", e.getMessage());
+                log.error("Failed to perform CloudFlare authorization on startup: {}", e.toString());
             }
             reconnectTimer.schedule(new ReconnectTimerTask(),5000);
         }
@@ -260,11 +260,22 @@ public class BittrexExchange implements AutoCloseable {
                 .withArgument("tickInterval",tickInterval.toString()));
     }
 
+    /**
+     * v2 version of getMarketSummary seems to return a different market than requested on occassion,
+     * so both v1 and v2 flavors are available
+     */
     public Response<MarketSummary> getMarketSummary(String market) {
         return getResponse(new TypeReference<Response<MarketSummary>>(){}, UrlBuilder.v2()
                 .withGroup(MARKET)
                 .withMethod("getmarketsummary")
                 .withArgument("marketname",market));
+    }
+
+    public Response<MarketSummary[]> getMarketSummaryV1(String market) {
+        return getResponse(new TypeReference<Response<MarketSummary[]>>(){}, UrlBuilder.v1_1()
+                .withGroup(PUBLIC)
+                .withMethod("getmarketsummary")
+                .withArgument("market",market));
     }
 
     public Response<MarketOrdersResult> getMarketOrderBook(String market) {
@@ -275,23 +286,31 @@ public class BittrexExchange implements AutoCloseable {
     }
 
     public Response<CompletedOrder[]> getMarketHistory(String market) {
-        return getResponse(new TypeReference<Response<CompletedOrder[]>>(){}, UrlBuilder.v2()
-                .withGroup(MARKET)
+        return getResponse(new TypeReference<Response<CompletedOrder[]>>(){}, UrlBuilder.v1_1()
+                .withGroup(PUBLIC)
                 .withMethod("getmarkethistory")
-                .withArgument("marketname",market));
+                .withArgument("market",market));
     }
 
     public Response<Order[]> getOpenOrders(String market){
+        return getOpenOrders(market,apiKeySecret);
+    }
+
+    public Response<Order[]> getOpenOrders(String market, ApiKeySecret credentials){
         return getResponse(new TypeReference<Response<Order[]>>(){}, UrlBuilder.v1_1()
-                .withApiKey(apikey,secret)
+                .withApiKey(credentials.getKey(),credentials.getSecret())
                 .withGroup(MARKET)
                 .withMethod("getopenorders")
                 .withArgument("marketname",market));
     }
 
     public Response<Order[]> getOpenOrders(){
+        return getOpenOrders(apiKeySecret);
+    }
+
+    public Response<Order[]> getOpenOrders(ApiKeySecret apiKeySecret){
         return getResponse(new TypeReference<Response<Order[]>>(){}, UrlBuilder.v1_1()
-                .withApiKey(apikey,secret)
+                .withApiKey(apiKeySecret.getKey(), apiKeySecret.getSecret())
                 .withGroup(MARKET)
                 .withMethod("getopenorders"));
     }
@@ -303,8 +322,8 @@ public class BittrexExchange implements AutoCloseable {
     }
 
     public Response<Market[]> getMarkets() {
-        return getResponse(new TypeReference<Response<Market[]>>(){}, UrlBuilder.v2()
-                .withGroup(MARKETS)
+        return getResponse(new TypeReference<Response<Market[]>>(){}, UrlBuilder.v1_1()
+                .withGroup(PUBLIC)
                 .withMethod("getmarkets"));
     }
 
@@ -320,64 +339,96 @@ public class BittrexExchange implements AutoCloseable {
                 .withMethod("getwallethealth"));
     }
 
-    public Response<CompletedOrder[]> getOrderHistory(String market) {
-        return getResponse(new TypeReference<Response<CompletedOrder[]>>(){}, UrlBuilder.v1_1()
-                .withApiKey(apikey,secret)
+    public Response<Order[]> getOrderHistory(String market) {
+        return getOrderHistory(market,apiKeySecret);
+    }
+
+    public Response<Order[]> getOrderHistory(String market, ApiKeySecret apiKeySecret) {
+        return getResponse(new TypeReference<Response<Order[]>>(){}, UrlBuilder.v1_1()
+                .withApiKey(apiKeySecret.getKey(),apiKeySecret.getSecret())
                 .withGroup(ACCOUNT)
                 .withMethod("getorderhistory")
-                .withArgument("marketname",market));
+                .withArgument("market",market));
     }
 
     public Response<Balance[]> getBalances() {
+        return getBalances(apiKeySecret);
+    }
+
+    public Response<Balance[]> getBalances(ApiKeySecret apiKeySecret) {
         return getResponse(new TypeReference<Response<Balance[]>>(){}, UrlBuilder.v1_1()
-                .withApiKey(apikey,secret)
+                .withApiKey(apiKeySecret.getKey(),apiKeySecret.getSecret())
                 .withGroup(ACCOUNT)
                 .withMethod("getbalances"));
     }
 
     public Response<Balance> getBalance(String currency) {
+        return getBalance(currency,apiKeySecret);
+    }
+
+    public Response<Balance> getBalance(String currency, ApiKeySecret apiKeySecret) {
         return getResponse(new TypeReference<Response<Balance>>(){}, UrlBuilder.v1_1()
-                .withApiKey(apikey,secret)
+                .withApiKey(apiKeySecret.getKey(),apiKeySecret.getSecret())
                 .withGroup(ACCOUNT)
                 .withMethod("getbalance")
                 .withArgument("currency",currency));
     }
 
     public Response<Order> getOrder(String uuid) {
+        return getOrder(uuid,apiKeySecret);
+    }
+
+    public Response<Order> getOrder(String uuid, ApiKeySecret apiKeySecret) {
         return getResponse(new TypeReference<Response<Order>>(){}, UrlBuilder.v1_1()
-                .withApiKey(apikey,secret)
+                .withApiKey(apiKeySecret.getKey(),apiKeySecret.getSecret())
                 .withGroup(ACCOUNT)
                 .withMethod("getorder")
                 .withArgument("uuid",uuid));
     }
 
     public Response<DepositAddress> getDepositAddress(String currency) {
+        return getDepositAddress(currency,apiKeySecret);
+    }
+
+    public Response<DepositAddress> getDepositAddress(String currency, ApiKeySecret apiKeySecret) {
         return getResponse(new TypeReference<Response<DepositAddress>>(){}, UrlBuilder.v1_1()
-                .withApiKey(apikey,secret)
+                .withApiKey(apiKeySecret.getKey(),apiKeySecret.getSecret())
                 .withGroup(ACCOUNT)
                 .withMethod("getdepositaddress")
                 .withArgument("currency",currency));
     }
 
     public Response<WithdrawalDeposit[]> getWithdrawalHistory(String currency) {
+        return getWithdrawalHistory(currency,apiKeySecret);
+    }
+
+    public Response<WithdrawalDeposit[]> getWithdrawalHistory(String currency, ApiKeySecret apiKeySecret) {
         return getResponse(new TypeReference<Response<WithdrawalDeposit[]>>(){}, UrlBuilder.v1_1()
-                .withApiKey(apikey,secret)
+                .withApiKey(apiKeySecret.getKey(),apiKeySecret.getSecret())
                 .withGroup(ACCOUNT)
                 .withMethod("getwithdrawalhistory")
                 .withArgument("currency",currency));
     }
 
     public Response<WithdrawalDeposit[]> getDepositHistory(String currency) {
+        return getDepositHistory(currency,apiKeySecret);
+    }
+
+    public Response<WithdrawalDeposit[]> getDepositHistory(String currency, ApiKeySecret apiKeySecret) {
         return getResponse(new TypeReference<Response<WithdrawalDeposit[]>>(){}, UrlBuilder.v1_1()
-                .withApiKey(apikey,secret)
+                .withApiKey(apiKeySecret.getKey(),apiKeySecret.getSecret())
                 .withGroup(ACCOUNT)
                 .withMethod("getdeposithistory")
                 .withArgument("currency",currency));
     }
 
     public Response<UuidResult> withdraw(String currency, double quantity, String address) {
+        return withdraw(currency,quantity,address,apiKeySecret);
+    }
+
+    public Response<UuidResult> withdraw(String currency, double quantity, String address, ApiKeySecret apiKeySecret) {
         return getResponse(new TypeReference<Response<UuidResult>>(){}, UrlBuilder.v1_1()
-                .withApiKey(apikey,secret)
+                .withApiKey(apiKeySecret.getKey(),apiKeySecret.getSecret())
                 .withGroup(ACCOUNT)
                 .withMethod("withdraw")
                 .withArgument("currency",currency)
@@ -387,8 +438,12 @@ public class BittrexExchange implements AutoCloseable {
 
 
     public Response<UuidResult> buyLimit(String market, double quantity, double rate){
+        return buyLimit(market,quantity,rate,apiKeySecret);
+    }
+
+    public Response<UuidResult> buyLimit(String market, double quantity, double rate, ApiKeySecret apiKeySecret){
         return getResponse(new TypeReference<Response<UuidResult>>(){}, UrlBuilder.v1_1()
-                .withApiKey(apikey,secret)
+                .withApiKey(apiKeySecret.getKey(),apiKeySecret.getSecret())
                 .withGroup(MARKET)
                 .withMethod("buylimit")
                 .withArgument("market",market)
@@ -397,35 +452,51 @@ public class BittrexExchange implements AutoCloseable {
     }
 
     public Response<UuidResult> sellLimit(String market, double quantity, double rate){
+        return sellLimit(market,quantity,rate,apiKeySecret);
+    }
+
+    public Response<UuidResult> sellLimit(String market, double quantity, double rate, ApiKeySecret apiKeySecret){
         return getResponse(new TypeReference<Response<UuidResult>>(){}, UrlBuilder.v1_1()
-                .withApiKey(apikey,secret)
+                .withApiKey(apiKeySecret.getKey(),apiKeySecret.getSecret())
                 .withGroup(MARKET)
                 .withMethod("selllimit")
                 .withArgument("market",market)
-                .withArgument("quantity",String.format("%f",quantity))
-                .withArgument("rate",String.format("%f",rate)));
+                .withArgument("quantity",Double.toString(quantity))
+                .withArgument("rate",Double.toString(rate)));
     }
 
     public Response<?> cancel(String orderUuid){
+        return cancel(orderUuid,apiKeySecret);
+    }
+
+    public Response<?> cancel(String orderUuid, ApiKeySecret apiKeySecret){
         return getResponse(new TypeReference<Response<?>>(){}, UrlBuilder.v1_1()
-                .withApiKey(apikey,secret)
+                .withApiKey(apiKeySecret.getKey(),apiKeySecret.getSecret())
                 .withGroup(MARKET)
                 .withMethod("cancel")
                 .withArgument("uuid",orderUuid));
     }
 
-    private <Result> Response<Result> getResponse(TypeReference resultType, UrlBuilder urlBuilder) {
+    private boolean isTerminalError(String message){
+        return terminalErrors.contains(message);
+    }
+
+    private <Result> Response<Result> getResponse(TypeReference resultType, UrlBuilder urlBuilder ) {
 
         int triesLeft = retries;
         Response<Result> result = getResponseBody(resultType, urlBuilder);
 
-        while(!result.isSuccess() && triesLeft-- > 0){
+        while(!result.isSuccess() && triesLeft-- > 0 && !isTerminalError(result.getMessage())){
             log.warn("Request to URL {} failed with error {}, retries left: {}",urlBuilder.build(),result.getMessage(),triesLeft);
             result = getResponseBody(resultType, urlBuilder);
             try {
                 Thread.sleep(1000);
             } catch (InterruptedException e) {
             }
+        }
+
+        if(!result.isSuccess()){
+            log.warn("Request to URL {} failed with error {}",urlBuilder.build(),result.getMessage());
         }
 
         return result;
@@ -440,10 +511,11 @@ public class BittrexExchange implements AutoCloseable {
             String url;
 
             if(urlBuilder.isSecure()) {
+                ApiKeySecret builderApiSecret = urlBuilder.getApiKeySecret();
                 urlBuilder.withArgument("nonce",EncryptionUtility.generateNonce());
                 url = urlBuilder.build();
                 request = new HttpGet(url);
-                request.addHeader("apisign", EncryptionUtility.calculateHash(secret, url, "HmacSHA512")); // Attaches signature as a header
+                request.addHeader("apisign", EncryptionUtility.calculateHash(builderApiSecret.getSecret(), url, "HmacSHA512")); // Attaches signature as a header
             }else{
                 request = new HttpGet(urlBuilder.build());
             }

@@ -63,6 +63,7 @@ dependencies {
     testCompile 'junit:junit:4.12'
     testCompile 'pl.pojo:pojo-tester:0.7.6'
     testCompile 'org.reflections:reflections:0.9.10'
+    testCompile 'ch.qos.logback:logback-classic:1.2.3'
 }
 
 task javadocJar(type: Jar) {
