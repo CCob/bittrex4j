@@ -4,7 +4,7 @@
 
 
 ![bittrex4j Logo](docs/bittrex4j.png)  
-![Travis CI Status](https://travis-ci.org/CCob/bittrex4j.svg?branch=master) [![codecov](https://codecov.io/gh/CCob/bittrex4j/branch/master/graph/badge.svg)](https://codecov.io/gh/CCob/bittrex4j)  [![Maven metadata URI](https://img.shields.io/maven-metadata/v/http/central.maven.org/maven2/com/github/ccob/bittrex4j/maven-metadata.xml.svg)]()
+![Travis CI Status](https://travis-ci.org/CCob/bittrex4j.svg?branch=master) [![codecov](https://codecov.io/gh/CCob/bittrex4j/branch/master/graph/badge.svg)](https://codecov.io/gh/CCob/bittrex4j)  ![Maven Version](https://maven-badges.herokuapp.com/maven-central/com.github.ccob/bittrex4j/badge.svg)
 
 
 
@@ -20,7 +20,7 @@ bittrex4j is published on the maven central repository and can be imported into 
 <dependency>
   <groupId>com.github.ccob</groupId>
   <artifactId>bittrex4j</artifactId>
-  <version>1.0.4</version>
+  <version>1.0.5</version>
 </dependency>
 ```
 
@@ -85,7 +85,6 @@ package com.github.ccob.bittrex4j.samples;
 
 import com.github.ccob.bittrex4j.BittrexExchange;
 import com.github.ccob.bittrex4j.dao.Fill;
-import org.java_websocket.WebSocketImpl;
 
 import java.io.IOException;
 import java.util.Arrays;
@@ -96,37 +95,39 @@ public class ShowRealTimeFills {
 
         System.out.println("Press any key to quit");
 
-        BittrexExchange bittrexExchange = new BittrexExchange();
+        try(BittrexExchange bittrexExchange = new BittrexExchange()) {
 
-        bittrexExchange.onUpdateSummaryState(exchangeSummaryState -> {
-            if (exchangeSummaryState.getDeltas().length > 0) {
+            bittrexExchange.onUpdateSummaryState(exchangeSummaryState -> {
+                if (exchangeSummaryState.getDeltas().length > 0) {
 
-                Arrays.stream(exchangeSummaryState.getDeltas())
-                        .filter(marketSummary -> marketSummary.getMarketName().equals("BTC-BCC") || marketSummary.getMarketName().equals("BTC-ETH") )
-                        .forEach(marketSummary -> System.out.println(
-                                String.format("24 hour volume for market %s: %s",
-                                        marketSummary.getMarketName(),
-                                        marketSummary.getVolume().toString())));
-            }
-        });
+                    Arrays.stream(exchangeSummaryState.getDeltas())
+                            .filter(marketSummary -> marketSummary.getMarketName().equals("BTC-BCC") || marketSummary.getMarketName().equals("BTC-ETH"))
+                            .forEach(marketSummary -> System.out.println(
+                                    String.format("24 hour volume for market %s: %s",
+                                            marketSummary.getMarketName(),
+                                            marketSummary.getVolume().toString())));
+                }
+            });
 
-        bittrexExchange.onUpdateExchangeState(updateExchangeState -> {
-            double volume = Arrays.stream(updateExchangeState.getFills())
-                    .mapToDouble(Fill::getQuantity)
-                    .sum();
+            bittrexExchange.onUpdateExchangeState(updateExchangeState -> {
+                double volume = Arrays.stream(updateExchangeState.getFills())
+                        .mapToDouble(Fill::getQuantity)
+                        .sum();
 
-            System.out.println(String.format("N: %d, %02f volume across %d fill(s) for %s",updateExchangeState.getNounce(),
-                    volume, updateExchangeState.getFills().length, updateExchangeState.getMarketName()));
-        });
+                System.out.println(String.format("N: %d, %02f volume across %d fill(s) for %s", updateExchangeState.getNounce(),
+                        volume, updateExchangeState.getFills().length, updateExchangeState.getMarketName()));
+            });
 
-        bittrexExchange.connectToWebSocket( () -> {
-            bittrexExchange.subscribeToExchangeDeltas("BTC-ETH", null);
-            bittrexExchange.subscribeToExchangeDeltas("BTC-BCC",null);
-            bittrexExchange.subscribeToMarketSummaries(null);
-        });
+            bittrexExchange.connectToWebSocket(() -> {
+                bittrexExchange.subscribeToExchangeDeltas("BTC-ETH", null);
+                bittrexExchange.subscribeToExchangeDeltas("BTC-BCC", null);
+                bittrexExchange.subscribeToMarketSummaries(null);
+            });
 
-        System.in.read();
-        bittrexExchange.disconnectFromWebSocket();
+            System.in.read();
+        }
+
+        System.out.println("Closing websocket and exiting");
     }
 }
 ```
