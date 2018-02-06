@@ -22,7 +22,9 @@ import com.github.ccob.bittrex4j.listeners.InvocationResult;
 import com.github.ccob.bittrex4j.listeners.Listener;
 import com.github.ccob.bittrex4j.listeners.UpdateExchangeStateListener;
 import com.github.ccob.bittrex4j.listeners.UpdateSummaryStateListener;
+import com.github.signalr4j.client.ConnectionState;
 import com.github.signalr4j.client.Platform;
+import com.github.signalr4j.client.StateChangedCallback;
 import com.github.signalr4j.client.hubs.HubConnection;
 import com.github.signalr4j.client.hubs.HubProxy;
 import com.google.gson.Gson;
@@ -70,6 +72,7 @@ public class BittrexExchange implements AutoCloseable {
     private Observable<UpdateExchangeState> updateExchangeStateBroker = new Observable<>();
     private Observable<ExchangeSummaryState> exchangeSummaryStateBroker = new Observable<>();
     private Observable<Throwable> websockerErrorListener = new Observable<>();
+    private Observable<ConnectionState> websocketStateChangeListener = new Observable<>();
     private Runnable connectedHandler;
 
     private JavaType updateExchangeStateType;
@@ -158,6 +161,10 @@ public class BittrexExchange implements AutoCloseable {
         websockerErrorListener.addObserver(listener);
     }
 
+    public void onWebsocketStateChange(Listener<ConnectionState> listener){
+        websocketStateChangeListener.addObserver(listener);
+    }
+
     @SuppressWarnings("unchecked")
     private  void registerForEvent(String eventName, JavaType deltasType, Observable broker){
         hubProxy.on(eventName, deltas -> {
@@ -212,6 +219,7 @@ public class BittrexExchange implements AutoCloseable {
             registerForEvent("updateExchangeState", updateExchangeStateType,updateExchangeStateBroker);
 
             setupErrorHandler();
+            setupStateChangeHandler();
 
             performCloudFlareAuthorization();
             prepareHubConnectionForCloudFlare();
@@ -237,6 +245,12 @@ public class BittrexExchange implements AutoCloseable {
             reconnectTimer.schedule(new ReconnectTimerTask(),5000);
             log.error("Error: " + er.toString() + ", attempting reconnect in 5 seconds");
         });
+    }
+
+    private void setupStateChangeHandler(){
+      hubConnection.stateChanged( (oldState, newState) ->
+        websocketStateChangeListener.notifyObservers(newState)
+      );
     }
 
     public void connectToWebSocket(Runnable connectedHandler) throws IOException {
