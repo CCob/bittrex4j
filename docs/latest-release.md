@@ -7,7 +7,7 @@ bittrex4j is published on the maven central repository and can be imported into 
 <dependency>
   <groupId>com.github.ccob</groupId>
   <artifactId>bittrex4j</artifactId>
-  <version>1.0.4</version>
+  <version>1.0.5</version>
 </dependency>
 ```
 
