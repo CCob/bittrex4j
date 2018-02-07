@@ -237,14 +237,7 @@ public class BittrexExchange implements AutoCloseable {
     }
 
     private void setupErrorHandler(){
-        hubConnection.error( er -> {
-            websockerErrorListener.notifyObservers(er);
-            //we must clear this error handler in case another error arrives on the
-            //same hubConnection causing multiple reconnect timers to fire
-            hubConnection.error(null);
-            reconnectTimer.schedule(new ReconnectTimerTask(),5000);
-            log.error("Error: " + er.toString() + ", attempting reconnect in 5 seconds");
-        });
+        hubConnection.error( er -> websockerErrorListener.notifyObservers(er));
     }
 
     private void setupStateChangeHandler(){
