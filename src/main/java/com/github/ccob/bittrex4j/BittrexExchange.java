@@ -72,7 +72,7 @@ public class BittrexExchange implements AutoCloseable {
     private Observable<UpdateExchangeState> updateExchangeStateBroker = new Observable<>();
     private Observable<ExchangeSummaryState> exchangeSummaryStateBroker = new Observable<>();
     private Observable<Throwable> websockerErrorListener = new Observable<>();
-    private Observable<List<ConnectionState>> websocketStateChangeListener = new Observable<>();
+    private Observable<ConnectionStateChange> websocketStateChangeListener = new Observable<>();
     private Runnable connectedHandler;
 
     private JavaType updateExchangeStateType;
@@ -161,7 +161,7 @@ public class BittrexExchange implements AutoCloseable {
         websockerErrorListener.addObserver(listener);
     }
 
-    public void onWebsocketStateChange(Listener<List<ConnectionState>> listener){
+    public void onWebsocketStateChange(Listener<ConnectionStateChange> listener){
         websocketStateChangeListener.addObserver(listener);
     }
 
@@ -249,10 +249,8 @@ public class BittrexExchange implements AutoCloseable {
 
     private void setupStateChangeHandler(){
       hubConnection.stateChanged( (oldState, newState) -> {
-            ArrayList<ConnectionState> states = new ArrayList<>(2);
-            states.add(oldState);
-            states.add(newState);
-            websocketStateChangeListener.notifyObservers(states);
+            ConnectionStateChange connectionStateChange = new ConnectionStateChange(oldState, newState);
+            websocketStateChangeListener.notifyObservers(connectionStateChange);
           }
       );
     }
