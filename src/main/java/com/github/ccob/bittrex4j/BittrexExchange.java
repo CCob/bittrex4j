@@ -85,6 +85,7 @@ public class BittrexExchange implements AutoCloseable {
     private class ReconnectTimerTask extends TimerTask{
         @Override
         public void run() {
+            log.info("Attempting to reconnect to web socket");
             startConnection();
         }
     }
@@ -212,6 +213,8 @@ public class BittrexExchange implements AutoCloseable {
             hubConnection = httpFactory.createHubConnection("https://socket.bittrex.com",null,true,
                     new SignalRLoggerDecorator(log_sockets));
 
+            hubConnection.setReconnectOnError(false);
+
             hubProxy = hubConnection.createHubProxy("CoreHub");
             hubConnection.connected(connectedHandler);
 
@@ -240,12 +243,14 @@ public class BittrexExchange implements AutoCloseable {
         hubConnection.error( er -> websockerErrorListener.notifyObservers(er));
     }
 
-    private void setupStateChangeHandler(){
-      hubConnection.stateChanged( (oldState, newState) -> {
-            ConnectionStateChange connectionStateChange = new ConnectionStateChange(oldState, newState);
-            websocketStateChangeListener.notifyObservers(connectionStateChange);
-          }
-      );
+    private void setupStateChangeHandler() {
+        hubConnection.stateChanged((oldState, newState) -> {
+                if (newState == ConnectionState.Disconnected) {
+                    reconnectTimer.schedule(new ReconnectTimerTask(), 5000);
+                }
+                websocketStateChangeListener.notifyObservers(new ConnectionStateChange(oldState, newState));
+            }
+        );
     }
 
     public void connectToWebSocket(Runnable connectedHandler) throws IOException {
