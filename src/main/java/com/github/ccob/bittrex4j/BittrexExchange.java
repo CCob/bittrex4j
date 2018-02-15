@@ -536,6 +536,15 @@ public class BittrexExchange implements AutoCloseable {
 
             request.addHeader("accept", "application/json");
 
+            int hardTimeout = 60; // seconds
+            TimerTask task = new TimerTask() {
+                @Override
+                public void run() {
+                    request.abort();
+                }
+            };
+            new Timer(true).schedule(task, hardTimeout * 1000);
+
             log.debug("Executing HTTP request: {}",request.toString());
             httpResponse = (CloseableHttpResponse)httpClient.execute(request,httpClientContext);
 
@@ -543,9 +552,11 @@ public class BittrexExchange implements AutoCloseable {
             if(responseCode == 200) {
                 String json = Utils.convertStreamToString(httpResponse.getEntity().getContent());
                 log.trace("REST JSON result: {}",json);
+                task.cancel();
                 return mapper.readerFor(resultType).readValue(json);
             }else{
                 log.warn("HTTP request failed with error code {} and reason {}",responseCode,httpResponse.getStatusLine().getReasonPhrase());
+                task.cancel();
                 return new Response<>(false,httpResponse.getStatusLine().getReasonPhrase(),null);
             }
 
