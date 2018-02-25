@@ -22,7 +22,9 @@ import com.github.ccob.bittrex4j.listeners.InvocationResult;
 import com.github.ccob.bittrex4j.listeners.Listener;
 import com.github.ccob.bittrex4j.listeners.UpdateExchangeStateListener;
 import com.github.ccob.bittrex4j.listeners.UpdateSummaryStateListener;
+import com.github.signalr4j.client.ConnectionState;
 import com.github.signalr4j.client.Platform;
+import com.github.signalr4j.client.StateChangedCallback;
 import com.github.signalr4j.client.hubs.HubConnection;
 import com.github.signalr4j.client.hubs.HubProxy;
 import com.google.gson.Gson;
@@ -70,6 +72,7 @@ public class BittrexExchange implements AutoCloseable {
     private Observable<UpdateExchangeState> updateExchangeStateBroker = new Observable<>();
     private Observable<ExchangeSummaryState> exchangeSummaryStateBroker = new Observable<>();
     private Observable<Throwable> websockerErrorListener = new Observable<>();
+    private Observable<ConnectionStateChange> websocketStateChangeListener = new Observable<>();
     private Runnable connectedHandler;
 
     private JavaType updateExchangeStateType;
@@ -82,6 +85,7 @@ public class BittrexExchange implements AutoCloseable {
     private class ReconnectTimerTask extends TimerTask{
         @Override
         public void run() {
+            log.info("Attempting to reconnect to web socket");
             startConnection();
         }
     }
@@ -158,6 +162,10 @@ public class BittrexExchange implements AutoCloseable {
         websockerErrorListener.addObserver(listener);
     }
 
+    public void onWebsocketStateChange(Listener<ConnectionStateChange> listener){
+        websocketStateChangeListener.addObserver(listener);
+    }
+
     @SuppressWarnings("unchecked")
     private  void registerForEvent(String eventName, JavaType deltasType, Observable broker){
         hubProxy.on(eventName, deltas -> {
@@ -205,6 +213,8 @@ public class BittrexExchange implements AutoCloseable {
             hubConnection = httpFactory.createHubConnection("https://socket.bittrex.com",null,true,
                     new SignalRLoggerDecorator(log_sockets));
 
+            hubConnection.setReconnectOnError(false);
+
             hubProxy = hubConnection.createHubProxy("CoreHub");
             hubConnection.connected(connectedHandler);
 
@@ -212,6 +222,7 @@ public class BittrexExchange implements AutoCloseable {
             registerForEvent("updateExchangeState", updateExchangeStateType,updateExchangeStateBroker);
 
             setupErrorHandler();
+            setupStateChangeHandler();
 
             performCloudFlareAuthorization();
             prepareHubConnectionForCloudFlare();
@@ -229,14 +240,17 @@ public class BittrexExchange implements AutoCloseable {
     }
 
     private void setupErrorHandler(){
-        hubConnection.error( er -> {
-            websockerErrorListener.notifyObservers(er);
-            //we must clear this error handler in case another error arrives on the
-            //same hubConnection causing multiple reconnect timers to fire
-            hubConnection.error(null);
-            reconnectTimer.schedule(new ReconnectTimerTask(),5000);
-            log.error("Error: " + er.toString() + ", attempting reconnect in 5 seconds");
-        });
+        hubConnection.error( er -> websockerErrorListener.notifyObservers(er));
+    }
+
+    private void setupStateChangeHandler() {
+        hubConnection.stateChanged((oldState, newState) -> {
+                if (newState == ConnectionState.Disconnected) {
+                    reconnectTimer.schedule(new ReconnectTimerTask(), 5000);
+                }
+                websocketStateChangeListener.notifyObservers(new ConnectionStateChange(oldState, newState));
+            }
+        );
     }
 
     public void connectToWebSocket(Runnable connectedHandler) throws IOException {
@@ -522,6 +536,15 @@ public class BittrexExchange implements AutoCloseable {
 
             request.addHeader("accept", "application/json");
 
+            int hardTimeout = 60; // seconds
+            TimerTask task = new TimerTask() {
+                @Override
+                public void run() {
+                    request.abort();
+                }
+            };
+            new Timer(true).schedule(task, hardTimeout * 1000);
+
             log.debug("Executing HTTP request: {}",request.toString());
             httpResponse = (CloseableHttpResponse)httpClient.execute(request,httpClientContext);
 
@@ -529,9 +552,11 @@ public class BittrexExchange implements AutoCloseable {
             if(responseCode == 200) {
                 String json = Utils.convertStreamToString(httpResponse.getEntity().getContent());
                 log.trace("REST JSON result: {}",json);
+                task.cancel();
                 return mapper.readerFor(resultType).readValue(json);
             }else{
                 log.warn("HTTP request failed with error code {} and reason {}",responseCode,httpResponse.getStatusLine().getReasonPhrase());
+                task.cancel();
                 return new Response<>(false,httpResponse.getStatusLine().getReasonPhrase(),null);
             }
 
