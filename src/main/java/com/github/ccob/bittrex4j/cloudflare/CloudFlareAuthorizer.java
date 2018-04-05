@@ -15,6 +15,7 @@ import org.slf4j.LoggerFactory;
 
 import javax.script.*;
 import java.io.IOException;
+import java.math.BigDecimal;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.net.URLEncoder;
@@ -61,13 +62,14 @@ public class CloudFlareAuthorizer {
         try {
 
             int retries = 5;
+            int timer = 5000;
             Response response = getResponse(url,null);
 
             while (response.httpStatus == HttpStatus.SC_SERVICE_UNAVAILABLE && retries-- > 0) {
 
                 String answer = getJsAnswer(cloudFlareUrl,response.responseText);
-                String jschl_vc = new PatternStreamer(jsChallenge).results(response.responseText).findFirst().get();
-                String pass =  new PatternStreamer(password).results(response.responseText).findFirst().get();
+                String jschl_vc = new PatternStreamer(jsChallenge).results(response.responseText).findFirst().orElse("");
+                String pass =  new PatternStreamer(password).results(response.responseText).findFirst().orElse("");
 
                 String authUrl = String.format("https://%s/cdn-cgi/l/chk_jschl?jschl_vc=%s&pass=%s&jschl_answer=%s",
                         cloudFlareUrl.getHost(),
@@ -75,7 +77,7 @@ public class CloudFlareAuthorizer {
                         URLEncoder.encode(pass,"UTF-8"),
                         answer);
 
-                Thread.sleep(5000);
+                Thread.sleep(timer+=1500);
                 response = getResponse(authUrl, url);
             }
 
@@ -157,7 +159,7 @@ public class CloudFlareAuthorizer {
 
          */
 
-        String answer = "";
+        BigDecimal answer = new BigDecimal(0);
         Matcher result = jsScript.matcher(responseHtml);
 
         if(result.find()){
@@ -174,14 +176,11 @@ public class CloudFlareAuthorizer {
                                 .results(responseHtml)
                                 .collect(Collectors.joining(";a","a",";")));
 
-
-                Bindings bindings = new SimpleBindings();
-                bindings.put("t",url.getHost());
-                jsCode += "+a.toFixed(10) + t.length;";
-                answer = engine.eval(jsCode,bindings).toString();
+                answer = new BigDecimal(engine.eval(jsCode).toString()).setScale(10,BigDecimal.ROUND_HALF_UP);
+                answer = answer.add(new BigDecimal(url.getHost().length()));
             }
         }
-        return answer;
+        return answer.toString();
     }
 
 }
