@@ -16,8 +16,8 @@ buildscript {
 }
 
 plugins {
-    id 'java-library'
     id 'idea'
+    id 'java-library'
     id 'maven'
     id 'jacoco'
     id 'signing'

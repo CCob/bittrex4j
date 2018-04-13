@@ -12,7 +12,7 @@ public class ShowRealTimeFills {
 
         System.out.println("Press any key to quit");
 
-        try(BittrexExchange bittrexExchange = new BittrexExchange()) {
+        try(BittrexExchange bittrexExchange = new BittrexExchange("ae874fd5578c4e23a7d3554e42a34e08","cbae25a5adca45f6b9ba8d35fb6c1936")) {
 
             bittrexExchange.onUpdateSummaryState(exchangeSummaryState -> {
                 if (exchangeSummaryState.getDeltas().length > 0) {

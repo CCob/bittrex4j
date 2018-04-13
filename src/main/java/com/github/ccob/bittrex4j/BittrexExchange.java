@@ -22,9 +22,7 @@ import com.github.ccob.bittrex4j.listeners.InvocationResult;
 import com.github.ccob.bittrex4j.listeners.Listener;
 import com.github.ccob.bittrex4j.listeners.UpdateExchangeStateListener;
 import com.github.ccob.bittrex4j.listeners.UpdateSummaryStateListener;
-import com.github.signalr4j.client.ConnectionState;
 import com.github.signalr4j.client.Platform;
-import com.github.signalr4j.client.StateChangedCallback;
 import com.github.signalr4j.client.hubs.HubConnection;
 import com.github.signalr4j.client.hubs.HubProxy;
 import com.google.gson.Gson;
@@ -207,6 +205,28 @@ public class BittrexExchange implements AutoCloseable {
         hubConnection.stop();
     }
 
+
+    private void connectedToWebSocket(){
+
+        if(apiKeySecret != null) {
+            hubProxy.invoke(String.class,"GetAuthContext",apiKeySecret.getKey())
+                    .done(challenge -> {
+                        String signature = EncryptionUtility.calculateHash(apiKeySecret.getSecret(),challenge,"HmacSHA512");
+                        hubProxy.invoke(Boolean.class,"Authenticate",apiKeySecret.getKey(),signature)
+                                .done(authenticated -> {
+                                    if(!authenticated){
+                                        log.error("Failed to authenticate for account-level notifications");
+                                    }else{
+                                        log.debug("Successfully authenticated for account-level notifications");
+                                    }
+                                    connectedHandler.run();
+                                });
+                    });
+        }else{
+            connectedHandler.run();
+        }
+    }
+
     private void startConnection(){
         try {
 
@@ -216,7 +236,7 @@ public class BittrexExchange implements AutoCloseable {
             hubConnection.setReconnectOnError(false);
 
             hubProxy = hubConnection.createHubProxy("CoreHub");
-            hubConnection.connected(connectedHandler);
+            hubConnection.connected(this::connectedToWebSocket);
 
             registerForEvent("updateSummaryState", exchangeSummaryStateType,exchangeSummaryStateBroker);
             registerForEvent("updateExchangeState", updateExchangeStateType,updateExchangeStateBroker);
