@@ -13,18 +13,20 @@ import org.apache.http.cookie.Cookie;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import javax.script.ScriptEngine;
-import javax.script.ScriptEngineManager;
-import javax.script.ScriptException;
+import javax.script.*;
 import java.io.IOException;
+import java.math.BigDecimal;
 import java.net.MalformedURLException;
 import java.net.URL;
+import java.net.URLEncoder;
 import java.util.Optional;
 import java.util.Timer;
 import java.util.TimerTask;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
+
+import static javax.script.ScriptContext.ENGINE_SCOPE;
 
 public class CloudFlareAuthorizer {
 
@@ -60,18 +62,22 @@ public class CloudFlareAuthorizer {
         try {
 
             int retries = 5;
+            int timer = 5000;
             Response response = getResponse(url,null);
 
             while (response.httpStatus == HttpStatus.SC_SERVICE_UNAVAILABLE && retries-- > 0) {
 
-                int answer = getJsAnswer(cloudFlareUrl,response.responseText);
-                String jschl_vc = new PatternStreamer(jsChallenge).results(response.responseText).findFirst().get();
-                String pass =  new PatternStreamer(password).results(response.responseText).findFirst().get();
+                String answer = getJsAnswer(cloudFlareUrl,response.responseText);
+                String jschl_vc = new PatternStreamer(jsChallenge).results(response.responseText).findFirst().orElse("");
+                String pass =  new PatternStreamer(password).results(response.responseText).findFirst().orElse("");
 
-                String authUrl = String.format("https://%s/cdn-cgi/l/chk_jschl?jschl_vc=%s&pass=%s&jschl_answer=%d",
-                        cloudFlareUrl.getHost(),jschl_vc,pass,answer);
+                String authUrl = String.format("https://%s/cdn-cgi/l/chk_jschl?jschl_vc=%s&pass=%s&jschl_answer=%s",
+                        cloudFlareUrl.getHost(),
+                        URLEncoder.encode(jschl_vc,"UTF-8"),
+                        URLEncoder.encode(pass,"UTF-8"),
+                        answer);
 
-                Thread.sleep(5000);
+                Thread.sleep(timer+=1500);
                 response = getResponse(authUrl, url);
             }
 
@@ -124,8 +130,7 @@ public class CloudFlareAuthorizer {
         ((CloseableHttpResponse)httpResponse).close();
         return new Response(httpStatus,responseText);
     }
-
-    private int getJsAnswer(URL url, String responseHtml) throws ScriptException, MalformedURLException {
+    private String getJsAnswer(URL url, String responseHtml) throws ScriptException, MalformedURLException {
 
         /** Example JS calculation from Cloudflare
 
@@ -154,7 +159,7 @@ public class CloudFlareAuthorizer {
 
          */
 
-        int answer = 0;
+        BigDecimal answer = new BigDecimal(0);
         Matcher result = jsScript.matcher(responseHtml);
 
         if(result.find()){
@@ -167,15 +172,15 @@ public class CloudFlareAuthorizer {
 
                 String jsCode = String.format("a=%s;%s",
                         matcher1.group(1),
-                        new PatternStreamer(val1+"\\."+val2+"([^,].+?);")
+                        new PatternStreamer(val1+"\\."+val2+"([^.,].+?);")
                                 .results(responseHtml)
                                 .collect(Collectors.joining(";a","a",";")));
 
-                answer = (int)((double)engine.eval(jsCode));
-                answer += url.getHost().length();
+                answer = new BigDecimal(engine.eval(jsCode).toString()).setScale(10,BigDecimal.ROUND_HALF_UP);
+                answer = answer.add(new BigDecimal(url.getHost().length()));
             }
         }
-        return answer;
+        return answer.toString();
     }
 
 }
