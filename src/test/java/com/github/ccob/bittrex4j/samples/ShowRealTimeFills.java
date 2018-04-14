@@ -3,8 +3,10 @@ package com.github.ccob.bittrex4j.samples;
 import com.github.ccob.bittrex4j.BittrexExchange;
 import com.github.ccob.bittrex4j.dao.Fill;
 
+import java.io.FileInputStream;
 import java.io.IOException;
 import java.util.Arrays;
+import java.util.Properties;
 
 public class ShowRealTimeFills {
 
@@ -12,7 +14,10 @@ public class ShowRealTimeFills {
 
         System.out.println("Press any key to quit");
 
-        try(BittrexExchange bittrexExchange = new BittrexExchange("ae874fd5578c4e23a7d3554e42a34e08","cbae25a5adca45f6b9ba8d35fb6c1936")) {
+        Properties prop = new Properties();
+        prop.load(new FileInputStream("test_keys.properties"));
+
+        try(BittrexExchange bittrexExchange = new BittrexExchange(prop.getProperty("apikey"),prop.getProperty("secret"))) {
 
             bittrexExchange.onUpdateSummaryState(exchangeSummaryState -> {
                 if (exchangeSummaryState.getDeltas().length > 0) {

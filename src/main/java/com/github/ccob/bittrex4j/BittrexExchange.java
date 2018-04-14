@@ -222,6 +222,9 @@ public class BittrexExchange implements AutoCloseable {
                                     }
                                     connectedHandler.run();
                                 });
+                    })
+                    .onError(error -> {
+                        log.error("Failed to authenticate on websocket, is the API key valid?");
                     });
         }else{
             connectedHandler.run();
