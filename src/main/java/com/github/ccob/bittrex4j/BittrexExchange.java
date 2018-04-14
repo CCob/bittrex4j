@@ -258,8 +258,8 @@ public class BittrexExchange implements AutoCloseable {
             hubConnection.connected(this::connectedToWebSocket);
 
             registerForEvent("uS", exchangeSummaryStateType,exchangeSummaryStateBroker);
-            //registerForEvent("uE", updateExchangeStateType,updateExchangeStateBroker);
-            //registerForEvent("uO",orderDeltaStateType,orderDeltaStateBroker);
+            registerForEvent("uE", updateExchangeStateType,updateExchangeStateBroker);
+            registerForEvent("uO",orderDeltaStateType,orderDeltaStateBroker);
 
             setupErrorHandler();
             setupStateChangeHandler();

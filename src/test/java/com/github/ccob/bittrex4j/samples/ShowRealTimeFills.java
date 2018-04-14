@@ -43,8 +43,16 @@ public class ShowRealTimeFills {
             });
 
             bittrexExchange.onOrderStateChange(orderDelta -> {
-                System.out.println(String.format("Order status change for %s with id %s, remaining %.04f, closed: %s", orderDelta.getOrder().getExchange(),
-                        orderDelta.getOrder().getOrderUuid(),orderDelta.getOrder().getQuantityRemaining(),!orderDelta.getOrder().isOpen()));
+                if(orderDelta.getType() == 0 || orderDelta.getType() == 1){
+                    System.out.println(String.format("%s order open with id %s, remaining %.04f", orderDelta.getOrder().getExchange(),
+                            orderDelta.getOrder().getOrderUuid(),orderDelta.getOrder().getQuantityRemaining()));
+                }else if(orderDelta.getType() == 2 ){
+                    System.out.println(String.format("%s order with id %s filled, qty %.04f", orderDelta.getOrder().getExchange(),
+                            orderDelta.getOrder().getOrderUuid(),orderDelta.getOrder().getQuantity()));
+                }else if(orderDelta.getType() == 3){
+                    System.out.println(String.format("%s order with id %s cancelled", orderDelta.getOrder().getExchange(),
+                            orderDelta.getOrder().getOrderUuid()));
+                }
             });
 
             bittrexExchange.connectToWebSocket(() -> {
