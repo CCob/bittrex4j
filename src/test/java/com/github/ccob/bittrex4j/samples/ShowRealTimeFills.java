@@ -2,6 +2,7 @@ package com.github.ccob.bittrex4j.samples;
 
 import com.github.ccob.bittrex4j.BittrexExchange;
 import com.github.ccob.bittrex4j.dao.Fill;
+import com.github.ccob.bittrex4j.dao.OrderType;
 
 import java.io.FileInputStream;
 import java.io.IOException;
@@ -43,13 +44,13 @@ public class ShowRealTimeFills {
             });
 
             bittrexExchange.onOrderStateChange(orderDelta -> {
-                if(orderDelta.getType() == 0 || orderDelta.getType() == 1){
+                if(orderDelta.getType() == OrderType.Open || orderDelta.getType() == OrderType.Partial){
                     System.out.println(String.format("%s order open with id %s, remaining %.04f", orderDelta.getOrder().getExchange(),
                             orderDelta.getOrder().getOrderUuid(),orderDelta.getOrder().getQuantityRemaining()));
-                }else if(orderDelta.getType() == 2 ){
+                }else if(orderDelta.getType() == OrderType.Filled ){
                     System.out.println(String.format("%s order with id %s filled, qty %.04f", orderDelta.getOrder().getExchange(),
                             orderDelta.getOrder().getOrderUuid(),orderDelta.getOrder().getQuantity()));
-                }else if(orderDelta.getType() == 3){
+                }else if(orderDelta.getType() == OrderType.Cancelled){
                     System.out.println(String.format("%s order with id %s cancelled", orderDelta.getOrder().getExchange(),
                             orderDelta.getOrder().getOrderUuid()));
                 }
