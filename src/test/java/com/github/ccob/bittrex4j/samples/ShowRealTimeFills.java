@@ -36,8 +36,15 @@ public class ShowRealTimeFills {
                         .mapToDouble(Fill::getQuantity)
                         .sum();
 
-                System.out.println(String.format("N: %d, %02f volume across %d fill(s) for %s", updateExchangeState.getNounce(),
-                        volume, updateExchangeState.getFills().length, updateExchangeState.getMarketName()));
+                if(updateExchangeState.getFills().length > 0) {
+                    System.out.println(String.format("N: %d, %02f volume across %d fill(s) for %s", updateExchangeState.getNounce(),
+                            volume, updateExchangeState.getFills().length, updateExchangeState.getMarketName()));
+                }
+            });
+
+            bittrexExchange.onOrderStateChange(orderDelta -> {
+                System.out.println(String.format("Order status change for %s with id %s, remaining %.04f, closed: %s", orderDelta.getOrder().getExchange(),
+                        orderDelta.getOrder().getOrderUuid(),orderDelta.getOrder().getQuantityRemaining(),!orderDelta.getOrder().isOpen()));
             });
 
             bittrexExchange.connectToWebSocket(() -> {

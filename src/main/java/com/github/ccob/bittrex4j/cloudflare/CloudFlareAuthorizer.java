@@ -55,17 +55,20 @@ public class CloudFlareAuthorizer {
         this.httpClientContext = httpClientContext;
     }
 
-    public void getAuthorizationResult(String url) throws IOException, ScriptException {
+    public boolean getAuthorizationResult(String url) throws IOException, ScriptException {
 
         URL cloudFlareUrl = new URL(url);
 
         try {
 
             int retries = 5;
-            int timer = 5000;
-            Response response = getResponse(url,null);
+            int timer = 4500;
+            Response response = getResponse(url,url);
 
             while (response.httpStatus == HttpStatus.SC_SERVICE_UNAVAILABLE && retries-- > 0) {
+
+                log.trace("CloudFlare response HTML:");
+                log.trace(response.responseText);
 
                 String answer = getJsAnswer(cloudFlareUrl,response.responseText);
                 String jschl_vc = new PatternStreamer(jsChallenge).results(response.responseText).findFirst().orElse("");
@@ -77,18 +80,24 @@ public class CloudFlareAuthorizer {
                         URLEncoder.encode(pass,"UTF-8"),
                         answer);
 
-                Thread.sleep(timer+=1500);
+                log.debug(String.format("CloudFlare auth URL: %s",authUrl));
+
+                Thread.sleep(timer);
                 response = getResponse(authUrl, url);
             }
 
             if (response.httpStatus != HttpStatus.SC_OK) {
-                log.error("Failed to perform Cloudflare DDoS authorization, got status {}", response.httpStatus);
-                return;
+                if(response.httpStatus == HttpStatus.SC_FORBIDDEN && response.responseText.contains("cf-captcha-container")){
+                    log.warn("Getting CAPTCHA request from bittrex, throttling retries");
+                    Thread.sleep(15000);
+                }
+                log.trace("Failure HTML: " + response.responseText);
+                return false;
             }
 
         }catch(InterruptedException ie){
             log.error("Interrupted whilst waiting to perform CloudFlare authorization",ie);
-            return;
+            return false;
         }
 
         Optional<Cookie> cfClearanceCookie = httpClientContext.getCookieStore().getCookies()
@@ -102,6 +111,8 @@ public class CloudFlareAuthorizer {
         }else{
             log.info("Cloudflare DDoS is not currently active");
         }
+
+        return true;
     }
 
     private Response getResponse(String url, String referer) throws IOException {
@@ -178,6 +189,8 @@ public class CloudFlareAuthorizer {
 
                 answer = new BigDecimal(engine.eval(jsCode).toString()).setScale(10,BigDecimal.ROUND_HALF_UP);
                 answer = answer.add(new BigDecimal(url.getHost().length()));
+
+                log.debug(String.format("CloudFlare JS challenge code: %s", jsCode));
             }
         }
         return answer.toString();

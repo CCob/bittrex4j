@@ -52,6 +52,7 @@ public class Order {
     private String orderUuid;
     private String exchange;
     private String type;
+    private Long id;
     private double quantity;
     private double quantityRemaining;
     private double limit;
@@ -64,6 +65,7 @@ public class Order {
     private double pricePerUnit;
     private ZonedDateTime opened;
     private ZonedDateTime closed;
+    private ZonedDateTime updated;
     private boolean open;
     private String sentinel;
     private boolean cancelInitiated;
@@ -73,20 +75,23 @@ public class Order {
     private String conditionTarget;
 
     @JsonCreator
-    public Order(@JsonProperty("AccountId") String accountId, @JsonProperty("OrderUuid") String orderUuid,
-                 @JsonProperty("Exchange") String exchange, @JsonProperty("Type") @JsonAlias("OrderType") String type,
-                 @JsonProperty("Quantity") double quantity, @JsonProperty("QuantityRemaining") double quantityRemaining,
-                 @JsonProperty("Limit") double limit, @JsonProperty("Reserved") double reserved,
+    public Order(@JsonProperty("AccountId") @JsonAlias("U") String accountId, @JsonProperty("OrderUuid") @JsonAlias({"OU"}) String orderUuid,
+                 @JsonProperty("I") Long id,
+                 @JsonProperty("Exchange") @JsonAlias("E") String exchange, @JsonProperty("Type") @JsonAlias({"OrderType","OT"})String type,
+                 @JsonProperty("Quantity") @JsonAlias("Q") double quantity, @JsonProperty("QuantityRemaining") @JsonAlias("q") double quantityRemaining,
+                 @JsonProperty("Limit") @JsonAlias("X") double limit, @JsonProperty("Reserved") double reserved,
                  @JsonProperty("ReserveRemaining") double reserveRemaining, @JsonProperty("CommissionReserved") double commissionReserved,
-                 @JsonProperty("CommissionReserveRemaining") double commissionReserveRemaining, @JsonProperty("CommissionPaid") @JsonAlias("Commission") double commissionPaid,
-                 @JsonProperty("Price") double price, @JsonProperty("PricePerUnit") double pricePerUnit,
-                 @JsonProperty("Opened") @JsonAlias("TimeStamp") ZonedDateTime opened, @JsonProperty("Closed") ZonedDateTime closed,
-                 @JsonProperty("IsOpen") boolean open, @JsonProperty("Sentinel") String sentinel,
-                 @JsonProperty("CancelInitiated") boolean cancelInitiated, @JsonProperty("ImmediateOrCancel")boolean immediateOrCancel,
-                 @JsonProperty("IsConditional") boolean conditional, @JsonProperty("Condition") String condition, @JsonProperty("ConditionTarget") String conditionTarget) {
+                 @JsonProperty("CommissionReserveRemaining") double commissionReserveRemaining, @JsonProperty("CommissionPaid") @JsonAlias({"Commission","n"}) double commissionPaid,
+                 @JsonProperty("Price") @JsonAlias("P") double price, @JsonProperty("PricePerUnit") @JsonAlias("PU") double pricePerUnit,
+                 @JsonProperty("Opened") @JsonAlias({"TimeStamp","Y"}) ZonedDateTime opened, @JsonProperty("Closed") @JsonAlias("C") ZonedDateTime closed,
+                 @JsonProperty("IsOpen") @JsonAlias("i") boolean open, @JsonProperty("Sentinel") String sentinel,
+                 @JsonProperty("CancelInitiated") @JsonAlias("CI") boolean cancelInitiated, @JsonProperty("ImmediateOrCancel") @JsonAlias("K")boolean immediateOrCancel,
+                 @JsonProperty("IsConditional") @JsonAlias("k") boolean conditional, @JsonProperty("Condition") @JsonAlias("J") String condition,
+                 @JsonProperty("ConditionTarget") @JsonAlias("j") String conditionTarget, @JsonProperty("u") ZonedDateTime updated) {
 
         this.accountId = accountId;
         this.orderUuid = orderUuid;
+        this.id = id;
         this.exchange = exchange;
         this.type = type;
         this.quantity = quantity;
@@ -108,6 +113,7 @@ public class Order {
         this.conditional = conditional;
         this.condition = condition;
         this.conditionTarget = conditionTarget;
+        this.updated = updated;
     }
 
     public String getAccountId() {

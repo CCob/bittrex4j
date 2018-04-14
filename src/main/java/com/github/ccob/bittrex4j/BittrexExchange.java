@@ -28,8 +28,10 @@ import com.github.signalr4j.client.hubs.HubConnection;
 import com.github.signalr4j.client.hubs.HubProxy;
 import com.google.gson.Gson;
 import com.google.gson.internal.LinkedTreeMap;
+import org.apache.commons.codec.binary.Base64;
 import org.apache.http.HttpHeaders;
 import org.apache.http.client.HttpClient;
+import org.apache.http.client.entity.DeflateInputStream;
 import org.apache.http.client.methods.CloseableHttpResponse;
 import org.apache.http.client.methods.HttpGet;
 import org.apache.http.client.protocol.HttpClientContext;
@@ -37,7 +39,9 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import javax.script.ScriptException;
+import java.io.ByteArrayInputStream;
 import java.io.IOException;
+import java.io.InputStream;
 import java.math.BigDecimal;
 import java.security.InvalidKeyException;
 import java.security.NoSuchAlgorithmException;
@@ -70,12 +74,14 @@ public class BittrexExchange implements AutoCloseable {
     private List<String> marketSubscriptions = new ArrayList<>();
     private Observable<UpdateExchangeState> updateExchangeStateBroker = new Observable<>();
     private Observable<ExchangeSummaryState> exchangeSummaryStateBroker = new Observable<>();
+    private Observable<OrderDelta> orderDeltaStateBroker = new Observable<>();
     private Observable<Throwable> websockerErrorListener = new Observable<>();
     private Observable<ConnectionStateChange> websocketStateChangeListener = new Observable<>();
     private Runnable connectedHandler;
 
     private JavaType updateExchangeStateType;
     private JavaType exchangeSummaryStateType;
+    private JavaType orderDeltaStateType;
 
     private Timer reconnectTimer = new Timer();
 
@@ -118,19 +124,21 @@ public class BittrexExchange implements AutoCloseable {
 
         updateExchangeStateType = mapper.getTypeFactory().constructType(UpdateExchangeState.class);
         exchangeSummaryStateType = mapper.getTypeFactory().constructType(ExchangeSummaryState.class);
+        orderDeltaStateType = mapper.getTypeFactory().constructType(OrderDelta.class);
 
         httpClient = httpFactory.createClient();
         httpClientContext = httpFactory.createClientContext();
     }
 
-    private void performCloudFlareAuthorization() throws IOException {
+    private boolean performCloudFlareAuthorization() throws IOException {
 
         try {
             httpClientContext = httpFactory.createClientContext();
             CloudFlareAuthorizer cloudFlareAuthorizer = new CloudFlareAuthorizer(httpClient,httpClientContext);
-            cloudFlareAuthorizer.getAuthorizationResult("https://bittrex.com");
+            return cloudFlareAuthorizer.getAuthorizationResult("https://bittrex.com");
         } catch (ScriptException e) {
             log.error("Failed to perform CloudFlare authorization",e);
+            return false;
         }
     }
 
@@ -141,7 +149,7 @@ public class BittrexExchange implements AutoCloseable {
                 .collect(Collectors.joining(";"));
 
         hubConnection.getHeaders().put("Cookie",cookies);
-        hubConnection.getHeaders().put(HttpHeaders.USER_AGENT, Platform.getUserAgent());
+        hubConnection.getHeaders().put(HttpHeaders.USER_AGENT, Utils.getUserAgent());
     }
 
     @Override
@@ -165,16 +173,24 @@ public class BittrexExchange implements AutoCloseable {
         websocketStateChangeListener.addObserver(listener);
     }
 
+    public void onOrderStateChange(Listener<OrderDelta> listener){
+        orderDeltaStateBroker.addObserver(listener);
+    }
+
+    private InputStream decode(String wireData) throws IOException {
+        ByteArrayInputStream bais = new ByteArrayInputStream(Base64.decodeBase64(wireData));
+        return new DeflateInputStream(bais);
+    }
+
     @SuppressWarnings("unchecked")
     private  void registerForEvent(String eventName, JavaType deltasType, Observable broker){
         hubProxy.on(eventName, deltas -> {
             try {
-                //TODO: find better way to convert from Gson LinkedTreeMap to Jackson.  This method is inefficient
-                broker.notifyObservers(mapper.readerFor(deltasType).readValue(new Gson().toJson(deltas)));
+                broker.notifyObservers(mapper.readerFor(deltasType).readValue(decode(deltas)));
             } catch (IOException e) {
                 log.error("Failed to parse response",e);
             }
-        }, Object.class);
+        }, String.class);
     }
 
 
@@ -205,7 +221,6 @@ public class BittrexExchange implements AutoCloseable {
     public void disconnectFromWebSocket(){
         hubConnection.stop();
     }
-
 
     private void connectedToWebSocket(){
 
@@ -239,16 +254,17 @@ public class BittrexExchange implements AutoCloseable {
 
             hubConnection.setReconnectOnError(false);
 
-            hubProxy = hubConnection.createHubProxy("CoreHub");
+            hubProxy = hubConnection.createHubProxy("c2");
             hubConnection.connected(this::connectedToWebSocket);
 
-            registerForEvent("updateSummaryState", exchangeSummaryStateType,exchangeSummaryStateBroker);
-            registerForEvent("updateExchangeState", updateExchangeStateType,updateExchangeStateBroker);
+            registerForEvent("uS", exchangeSummaryStateType,exchangeSummaryStateBroker);
+            //registerForEvent("uE", updateExchangeStateType,updateExchangeStateBroker);
+            //registerForEvent("uO",orderDeltaStateType,orderDeltaStateBroker);
 
             setupErrorHandler();
             setupStateChangeHandler();
 
-            performCloudFlareAuthorization();
+            while(!performCloudFlareAuthorization()){}
             prepareHubConnectionForCloudFlare();
 
             hubConnection.start();

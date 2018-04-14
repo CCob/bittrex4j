@@ -20,11 +20,13 @@ import org.apache.http.impl.client.HttpClients;
 
 public class HttpFactory {
 
+
+
     public HttpClient createClient(){
         return HttpClients
                 .custom()
                 //hack, since we cant control the user agent inside the signalr library
-                .setUserAgent(Platform.getUserAgent())
+                .setUserAgent(Utils.getUserAgent())
                 .build();
     }
 
