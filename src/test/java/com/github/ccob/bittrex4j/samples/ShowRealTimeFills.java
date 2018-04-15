@@ -56,9 +56,14 @@ public class ShowRealTimeFills {
                 }
             });
 
+            bittrexExchange.onBalanceStateChange(balanceDelta -> {
+                System.out.println(String.format("%s wallet balance updated, available: %s, pending: %s", balanceDelta.getBalance().getCurrency(),
+                        balanceDelta.getBalance().getAvailable(),balanceDelta.getBalance().getPending()));
+            });
+
             bittrexExchange.connectToWebSocket(() -> {
                 bittrexExchange.subscribeToExchangeDeltas("BTC-ETH", null);
-                bittrexExchange.subscribeToExchangeDeltas("BTC-BCC", null);
+                bittrexExchange.subscribeToExchangeDeltas("BTC-XVG", null);
                 bittrexExchange.subscribeToMarketSummaries(null);
             });
 

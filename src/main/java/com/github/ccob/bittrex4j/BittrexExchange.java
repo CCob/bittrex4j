@@ -77,11 +77,13 @@ public class BittrexExchange implements AutoCloseable {
     private Observable<OrderDelta> orderDeltaStateBroker = new Observable<>();
     private Observable<Throwable> websockerErrorListener = new Observable<>();
     private Observable<ConnectionStateChange> websocketStateChangeListener = new Observable<>();
+    private Observable<BalanceDelta> balanceDeltaStateBroker = new Observable<>();
     private Runnable connectedHandler;
 
     private JavaType updateExchangeStateType;
     private JavaType exchangeSummaryStateType;
     private JavaType orderDeltaStateType;
+    private JavaType balanceDeltaStateType;
 
     private Timer reconnectTimer = new Timer();
 
@@ -125,6 +127,7 @@ public class BittrexExchange implements AutoCloseable {
         updateExchangeStateType = mapper.getTypeFactory().constructType(UpdateExchangeState.class);
         exchangeSummaryStateType = mapper.getTypeFactory().constructType(ExchangeSummaryState.class);
         orderDeltaStateType = mapper.getTypeFactory().constructType(OrderDelta.class);
+        balanceDeltaStateType = mapper.getTypeFactory().constructType(BalanceDelta.class);
 
         httpClient = httpFactory.createClient();
         httpClientContext = httpFactory.createClientContext();
@@ -175,6 +178,10 @@ public class BittrexExchange implements AutoCloseable {
 
     public void onOrderStateChange(Listener<OrderDelta> listener){
         orderDeltaStateBroker.addObserver(listener);
+    }
+
+    public void onBalanceStateChange(Listener<BalanceDelta> listener){
+        balanceDeltaStateBroker.addObserver(listener);
     }
 
     private InputStream decode(String wireData) throws IOException {
@@ -259,7 +266,8 @@ public class BittrexExchange implements AutoCloseable {
 
             registerForEvent("uS", exchangeSummaryStateType,exchangeSummaryStateBroker);
             registerForEvent("uE", updateExchangeStateType,updateExchangeStateBroker);
-            registerForEvent("uO",orderDeltaStateType,orderDeltaStateBroker);
+            registerForEvent("uO", orderDeltaStateType,orderDeltaStateBroker);
+            registerForEvent("uB", balanceDeltaStateType,balanceDeltaStateBroker);
 
             setupErrorHandler();
             setupStateChangeHandler();

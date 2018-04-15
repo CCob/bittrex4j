@@ -11,8 +11,11 @@
 
 package com.github.ccob.bittrex4j.dao;
 
+import com.fasterxml.jackson.annotation.JsonAlias;
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
+
+import java.time.ZonedDateTime;
 
 public class Balance {
     private String currency;
@@ -22,12 +25,14 @@ public class Balance {
     private String cryptoAddress;
     private boolean requested;
     private String uuid;
+    private ZonedDateTime updated;
+    private Boolean autoSell;
 
     @JsonCreator
-    public Balance(@JsonProperty("Currency") String currency, @JsonProperty("Balance") double balance,
-                   @JsonProperty("Available") double available, @JsonProperty("Pending") double pending,
-                   @JsonProperty("CryptoAddress") String cryptoAddress, @JsonProperty("Requested") boolean requested,
-                   @JsonProperty("Uuid") String uuid) {
+    public Balance(@JsonProperty("Currency") @JsonAlias("c") String currency, @JsonProperty("Balance") @JsonAlias("b") double balance,
+                   @JsonProperty("Available") @JsonAlias("a") double available, @JsonProperty("Pending") @JsonAlias("z") double pending,
+                   @JsonProperty("CryptoAddress") @JsonAlias("p") String cryptoAddress, @JsonProperty("Requested") @JsonAlias("r") boolean requested,
+                   @JsonProperty("Uuid") @JsonAlias("U") String uuid, @JsonProperty("u") ZonedDateTime updated, @JsonProperty("h") Boolean autoSell) {
         this.currency = currency;
         this.balance = balance;
         this.available = available;
@@ -35,6 +40,8 @@ public class Balance {
         this.cryptoAddress = cryptoAddress;
         this.requested = requested;
         this.uuid = uuid;
+        this.updated = updated;
+        this.autoSell = autoSell;
     }
 
     public String getCurrency() {
@@ -63,5 +70,13 @@ public class Balance {
 
     public String getUuid() {
         return uuid;
+    }
+
+    public ZonedDateTime getUpdated() {
+        return updated;
+    }
+
+    public Boolean getAutoSell() {
+        return autoSell;
     }
 }
