@@ -365,15 +365,15 @@ public class BittrexExchangeTest {
 
         bittrexExchange.connectToWebSocket(() -> System.out.println("Connected"));
 
-        verify(mockHubProxy).on(eq("uS"),subscriptionHandlerArgumentCaptor.capture(),eq(Object.class));
+        verify(mockHubProxy).on(eq("uS"),subscriptionHandlerArgumentCaptorString.capture(),eq(String.class));
 
         bittrexExchange.onUpdateSummaryState(exchangeSummaryState -> {
-            assertThat(exchangeSummaryState.getNounce(), equalTo(24724L));
-            assertThat(exchangeSummaryState.getDeltas().length, equalTo(56));
+            assertThat(exchangeSummaryState.getNounce(), equalTo(2458L));
+            assertThat(exchangeSummaryState.getDeltas().length, equalTo(77));
             lambdaCalled=true;
         });
 
-        subscriptionHandlerArgumentCaptor.getValue().run(new Gson().fromJson(loadTestResourceAsString("/UpdateSummaryState.json"),LinkedTreeMap.class));
+        subscriptionHandlerArgumentCaptorString.getValue().run(loadTestResourceAsString("/UpdateSummaryState.json"));
         assertThat(lambdaCalled,is(true));
     }
 
@@ -383,17 +383,17 @@ public class BittrexExchangeTest {
 
         bittrexExchange.connectToWebSocket(() -> System.out.println("Connected"));
 
-        verify(mockHubProxy).on(eq("uE"), subscriptionHandlerArgumentCaptor.capture(), eq(Object.class));
+        verify(mockHubProxy).on(eq("uE"), subscriptionHandlerArgumentCaptorString.capture(), eq(String.class));
 
         bittrexExchange.onUpdateExchangeState(updateExchangeState -> {
-            assertThat(updateExchangeState.getNounce(), equalTo(50140L));
-            assertThat(updateExchangeState.getBuys().length, equalTo(5));
-            assertThat(updateExchangeState.getSells().length, equalTo(29));
-            assertThat(updateExchangeState.getFills().length, equalTo(1));
+            assertThat(updateExchangeState.getNounce(), equalTo(34940L));
+            assertThat(updateExchangeState.getBuys().length, equalTo(7));
+            assertThat(updateExchangeState.getSells().length, equalTo(8));
+            assertThat(updateExchangeState.getFills().length, equalTo(0));
             lambdaCalled=true;
         });
 
-        subscriptionHandlerArgumentCaptor.getValue().run(new Gson().fromJson(loadTestResourceAsString("/UpdateExchangeState.json"), Object.class));
+        subscriptionHandlerArgumentCaptorString.getValue().run(loadTestResourceAsString("/UpdateExchangeState.json"));
         assertThat(lambdaCalled,is(true));
     }
 

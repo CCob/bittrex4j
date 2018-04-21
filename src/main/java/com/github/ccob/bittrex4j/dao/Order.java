@@ -207,5 +207,13 @@ public class Order {
     public String getConditionTarget() {
         return conditionTarget;
     }
+
+    public Long getId() {
+        return id;
+    }
+
+    public ZonedDateTime getUpdated() {
+        return updated;
+    }
 }
 
