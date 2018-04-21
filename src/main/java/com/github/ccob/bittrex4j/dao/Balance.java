@@ -27,9 +27,10 @@ public class Balance {
     private String uuid;
     private ZonedDateTime updated;
     private Boolean autoSell;
+    private Long accountId;
 
     @JsonCreator
-    public Balance(@JsonProperty("Currency") @JsonAlias("c") String currency, @JsonProperty("Balance") @JsonAlias("b") double balance,
+    public Balance(@JsonProperty("AccountId") @JsonAlias("W") Long accountId, @JsonProperty("Currency") @JsonAlias("c") String currency, @JsonProperty("Balance") @JsonAlias("b") double balance,
                    @JsonProperty("Available") @JsonAlias("a") double available, @JsonProperty("Pending") @JsonAlias("z") double pending,
                    @JsonProperty("CryptoAddress") @JsonAlias("p") String cryptoAddress, @JsonProperty("Requested") @JsonAlias("r") boolean requested,
                    @JsonProperty("Uuid") @JsonAlias("U") String uuid, @JsonProperty("u") ZonedDateTime updated, @JsonProperty("h") Boolean autoSell) {
@@ -42,6 +43,7 @@ public class Balance {
         this.uuid = uuid;
         this.updated = updated;
         this.autoSell = autoSell;
+        this.accountId = accountId;
     }
 
     public String getCurrency() {
@@ -78,5 +80,9 @@ public class Balance {
 
     public Boolean getAutoSell() {
         return autoSell;
+    }
+
+    public Long getAccountId() {
+        return accountId;
     }
 }
