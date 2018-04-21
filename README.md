@@ -20,7 +20,7 @@ bittrex4j is published on the maven central repository and can be imported into 
 <dependency>
   <groupId>com.github.ccob</groupId>
   <artifactId>bittrex4j</artifactId>
-  <version>1.0.8</version>
+  <version>1.0.9</version>
 </dependency>
 ```
 
@@ -85,9 +85,12 @@ package com.github.ccob.bittrex4j.samples;
 
 import com.github.ccob.bittrex4j.BittrexExchange;
 import com.github.ccob.bittrex4j.dao.Fill;
+import com.github.ccob.bittrex4j.dao.OrderType;
 
+import java.io.FileInputStream;
 import java.io.IOException;
 import java.util.Arrays;
+import java.util.Properties;
 
 public class ShowRealTimeFills {
 
@@ -95,7 +98,10 @@ public class ShowRealTimeFills {
 
         System.out.println("Press any key to quit");
 
-        try(BittrexExchange bittrexExchange = new BittrexExchange()) {
+        Properties prop = new Properties();
+        prop.load(new FileInputStream("test_keys.properties"));
+
+        try(BittrexExchange bittrexExchange = new BittrexExchange(prop.getProperty("apikey"),prop.getProperty("secret"))) {
 
             bittrexExchange.onUpdateSummaryState(exchangeSummaryState -> {
                 if (exchangeSummaryState.getDeltas().length > 0) {
@@ -114,13 +120,33 @@ public class ShowRealTimeFills {
                         .mapToDouble(Fill::getQuantity)
                         .sum();
 
-                System.out.println(String.format("N: %d, %02f volume across %d fill(s) for %s", updateExchangeState.getNounce(),
-                        volume, updateExchangeState.getFills().length, updateExchangeState.getMarketName()));
+                if(updateExchangeState.getFills().length > 0) {
+                    System.out.println(String.format("N: %d, %02f volume across %d fill(s) for %s", updateExchangeState.getNounce(),
+                            volume, updateExchangeState.getFills().length, updateExchangeState.getMarketName()));
+                }
+            });
+
+            bittrexExchange.onOrderStateChange(orderDelta -> {
+                if(orderDelta.getType() == OrderType.Open || orderDelta.getType() == OrderType.Partial){
+                    System.out.println(String.format("%s order open with id %s, remaining %.04f", orderDelta.getOrder().getExchange(),
+                            orderDelta.getOrder().getOrderUuid(),orderDelta.getOrder().getQuantityRemaining()));
+                }else if(orderDelta.getType() == OrderType.Filled ){
+                    System.out.println(String.format("%s order with id %s filled, qty %.04f", orderDelta.getOrder().getExchange(),
+                            orderDelta.getOrder().getOrderUuid(),orderDelta.getOrder().getQuantity()));
+                }else if(orderDelta.getType() == OrderType.Cancelled){
+                    System.out.println(String.format("%s order with id %s cancelled", orderDelta.getOrder().getExchange(),
+                            orderDelta.getOrder().getOrderUuid()));
+                }
+            });
+
+            bittrexExchange.onBalanceStateChange(balanceDelta -> {
+                System.out.println(String.format("%s wallet balance updated, available: %s, pending: %s", balanceDelta.getBalance().getCurrency(),
+                        balanceDelta.getBalance().getAvailable(),balanceDelta.getBalance().getPending()));
             });
 
             bittrexExchange.connectToWebSocket(() -> {
                 bittrexExchange.subscribeToExchangeDeltas("BTC-ETH", null);
-                bittrexExchange.subscribeToExchangeDeltas("BTC-BCC", null);
+                bittrexExchange.subscribeToExchangeDeltas("BTC-XVG", null);
                 bittrexExchange.subscribeToMarketSummaries(null);
             });
 
