@@ -17,12 +17,15 @@ import com.fasterxml.jackson.databind.DeserializationContext;
 import com.fasterxml.jackson.databind.JsonDeserializer;
 
 import java.io.IOException;
+import java.time.Instant;
 import java.time.ZoneId;
 import java.time.ZonedDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.Arrays;
+import java.util.regex.Pattern;
 
 public class DateTimeDeserializer extends JsonDeserializer<ZonedDateTime> {
+
     @Override
     public ZonedDateTime deserialize(JsonParser p, DeserializationContext ctxt) throws IOException, JsonProcessingException {
 
@@ -32,14 +35,20 @@ public class DateTimeDeserializer extends JsonDeserializer<ZonedDateTime> {
         String value = p.getValueAsString();
         ZonedDateTime result = null;
 
-        if(value != null) {
-            int index;
-            if ((index = value.indexOf('.')) > -1) {
-                char[] chars = new char[4 - (value.length() - index)];
-                Arrays.fill(chars, '0');
-                value += new String(chars);
+        if(value.matches("[0-9]{12,}")){
+            Instant i = Instant.ofEpochMilli(Long.parseLong(value));
+            result = ZonedDateTime.ofInstant(i, ZoneId.of("UTC"));
+        }else{
+
+            if (value != null) {
+                int index;
+                if ((index = value.indexOf('.')) > -1) {
+                    char[] chars = new char[4 - (value.length() - index)];
+                    Arrays.fill(chars, '0');
+                    value += new String(chars);
+                }
+                result = ZonedDateTime.from(formatter.parse(value));
             }
-            result = ZonedDateTime.from(formatter.parse(value));
         }
 
         return result;

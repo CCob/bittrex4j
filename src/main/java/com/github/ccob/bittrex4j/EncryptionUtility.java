@@ -23,11 +23,11 @@ import java.util.Base64;
 
 class EncryptionUtility {
 
-    static String calculateHash(String secret, String url, String algorithm) throws InvalidKeyException, NoSuchAlgorithmException {
+    static String calculateHash(String secret, String data, String algorithm) throws InvalidKeyException, NoSuchAlgorithmException {
         Mac shaHmac = Mac.getInstance(algorithm);
         SecretKeySpec secretKey = new SecretKeySpec(secret.getBytes(), algorithm);
         shaHmac.init(secretKey);
-        byte[] hash = shaHmac.doFinal(url.getBytes());
+        byte[] hash = shaHmac.doFinal(data.getBytes());
         return Hex.encodeHexString(hash);
     }
 

@@ -10,6 +10,7 @@
 
     <logger name="com.github.ccob.bittrex4j.BittrexExchange.WebSockets" level="WARN"/>
     <logger name="com.github.ccob.bittrex4j.BittrexExchange" level="INFO"/>
+    <logger name="com.github.ccob.bittrex4j.cloudflare.CloudFlareAuthorizer" level="DEBUG"/>
 
     <root level="debug">
         <appender-ref ref="STDOUT" />

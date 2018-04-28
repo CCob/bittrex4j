@@ -36,7 +36,9 @@ public class CloudFlareAuthorizer {
     private HttpClientContext httpClientContext;
     private Pattern jsChallenge = Pattern.compile("name=\"jschl_vc\" value=\"(.+?)\"");
     private Pattern password = Pattern.compile("name=\"pass\" value=\"(.+?)\"");
-    private Pattern jsScript = Pattern.compile("var s,t,o,p,b,r,e,a,k,i,n,g,f, (.+?)=\\{\"(.+?)\"");
+    private Pattern jsScript = Pattern.compile("setTimeout\\(function\\(\\)\\{\\s+(var s,t,o,p,b,r,e,a,k,i,n,g,f.+?\\r?\\n[\\s\\S]+?a\\.value =.+?)\\r?\\n");
+
+
     private ScriptEngineManager engineManager = new ScriptEngineManager();
     private ScriptEngine engine = engineManager.getEngineByName("nashorn");
 
@@ -55,17 +57,20 @@ public class CloudFlareAuthorizer {
         this.httpClientContext = httpClientContext;
     }
 
-    public void getAuthorizationResult(String url) throws IOException, ScriptException {
+    public boolean getAuthorizationResult(String url) throws IOException, ScriptException {
 
         URL cloudFlareUrl = new URL(url);
 
         try {
 
             int retries = 5;
-            int timer = 5000;
-            Response response = getResponse(url,null);
+            int timer = 4500;
+            Response response = getResponse(url,url);
 
             while (response.httpStatus == HttpStatus.SC_SERVICE_UNAVAILABLE && retries-- > 0) {
+
+                log.trace("CloudFlare response HTML:");
+                log.trace(response.responseText);
 
                 String answer = getJsAnswer(cloudFlareUrl,response.responseText);
                 String jschl_vc = new PatternStreamer(jsChallenge).results(response.responseText).findFirst().orElse("");
@@ -77,18 +82,24 @@ public class CloudFlareAuthorizer {
                         URLEncoder.encode(pass,"UTF-8"),
                         answer);
 
-                Thread.sleep(timer+=1500);
+                log.debug(String.format("CloudFlare auth URL: %s",authUrl));
+
+                Thread.sleep(timer);
                 response = getResponse(authUrl, url);
             }
 
             if (response.httpStatus != HttpStatus.SC_OK) {
-                log.error("Failed to perform Cloudflare DDoS authorization, got status {}", response.httpStatus);
-                return;
+                if(response.httpStatus == HttpStatus.SC_FORBIDDEN && response.responseText.contains("cf-captcha-container")){
+                    log.warn("Getting CAPTCHA request from bittrex, throttling retries");
+                    Thread.sleep(15000);
+                }
+                log.trace("Failure HTML: " + response.responseText);
+                return false;
             }
 
         }catch(InterruptedException ie){
             log.error("Interrupted whilst waiting to perform CloudFlare authorization",ie);
-            return;
+            return false;
         }
 
         Optional<Cookie> cfClearanceCookie = httpClientContext.getCookieStore().getCookies()
@@ -102,6 +113,8 @@ public class CloudFlareAuthorizer {
         }else{
             log.info("Cloudflare DDoS is not currently active");
         }
+
+        return true;
     }
 
     private Response getResponse(String url, String referer) throws IOException {
@@ -132,55 +145,24 @@ public class CloudFlareAuthorizer {
     }
     private String getJsAnswer(URL url, String responseHtml) throws ScriptException, MalformedURLException {
 
-        /** Example JS calculation from Cloudflare
+        //Credit to Anarov to the improved Regex JS parsing here from https://github.com/Anorov/cloudflare-scrape
 
-         setTimeout(function() {
-             var s, t, o, p, b, r, e, a, k, i, n, g, f,
-             ANwodXX = {
-             "TgQVrpgKBJG": +((!+[] + !![] + !![] + !![] + []) + (!+[] + !![] + !![] + !![] + !![] + !![] + !![]))
-             };
-             t = document.createElement('div');
-             t.innerHTML = "<a href='/'>x</a>";
-             t = t.firstChild.href;
-             r = t.match(/https?:\/\//)[0];
-             t = t.substr(r.length);
-             t = t.substr(0, t.length - 1);
-             a = document.getElementById('jschl-answer');
-             f = document.getElementById('challenge-form');;
-             ANwodXX.TgQVrpgKBJG *= +((!+[] + !![] + !![] + []) + (!+[] + !![] + !![] + !![] + !![] + !![]));
-             ANwodXX.TgQVrpgKBJG += +((!+[] + !![] + []) + (+!![]));
-             ANwodXX.TgQVrpgKBJG += +((!+[] + !![] + []) + (!+[] + !![] + !![] + !![] + !![] + !![] + !![] + !![] + !![]));
-             ANwodXX.TgQVrpgKBJG += !+[] + !![] + !![] + !![] + !![];
-             a.value = parseInt(ANwodXX.TgQVrpgKBJG, 10) + t.length;
-             '; 121'
-             f.action += location.hash;
-             f.submit();
-         }, 4000);
-
-         */
-
-        BigDecimal answer = new BigDecimal(0);
         Matcher result = jsScript.matcher(responseHtml);
 
         if(result.find()){
-            String val1 = result.group(1);
-            String val2 = result.group(2);
+            String jsCode = result.group(1);
+            jsCode = jsCode.replaceAll("a\\.value = (.+ \\+ t\\.length).+","$1");
+            jsCode = jsCode.replaceAll("\\s{3,}[a-z](?: = |\\.).+","").replace("t.length",String.valueOf(url.getHost().length()));
+            jsCode = jsCode.replaceAll("[\\n\\\\']","");
 
-            Matcher matcher1 = Pattern.compile(val1+"=\\{\""+val2+"\":(.+?)}").matcher(responseHtml);
-
-            if(matcher1.find()){
-
-                String jsCode = String.format("a=%s;%s",
-                        matcher1.group(1),
-                        new PatternStreamer(val1+"\\."+val2+"([^.,].+?);")
-                                .results(responseHtml)
-                                .collect(Collectors.joining(";a","a",";")));
-
-                answer = new BigDecimal(engine.eval(jsCode).toString()).setScale(10,BigDecimal.ROUND_HALF_UP);
-                answer = answer.add(new BigDecimal(url.getHost().length()));
+            if(!jsCode.contains("toFixed")){
+                throw new IllegalStateException("BUG: could not find toFixed inside CF JS challenge code");
             }
+
+            log.debug(String.format("CloudFlare JS challenge code: %s", jsCode));
+            return new BigDecimal(engine.eval(jsCode).toString()).setScale(10,BigDecimal.ROUND_HALF_UP).toString();
         }
-        return answer.toString();
+        throw new IllegalStateException("BUG: could not find initial CF JS challenge code");
     }
 
 }

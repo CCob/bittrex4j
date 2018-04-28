@@ -11,6 +11,7 @@
 
 package com.github.ccob.bittrex4j.dao;
 
+import com.fasterxml.jackson.annotation.JsonAlias;
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
@@ -30,9 +31,9 @@ public class Fill {
 
 
     @JsonCreator
-    public Fill(@Nullable @JsonProperty("Id") Long id, @JsonProperty("OrderType") String orderType, @Nullable @JsonProperty("FillType") String fillType,
-                @Nullable @JsonProperty("Price") Double price, @Nullable @JsonProperty("Rate") Double rate,
-                @JsonProperty("Quantity") double quantity, @Nullable @JsonProperty("Total") Double total, @JsonProperty("TimeStamp") ZonedDateTime timeStamp){
+    public Fill(@Nullable @JsonProperty("Id") @JsonAlias("I") Long id, @JsonProperty("OrderType") @JsonAlias("OT") String orderType, @Nullable @JsonProperty("FillType") @JsonAlias("F") String fillType,
+                @Nullable @JsonProperty("Price") @JsonAlias("P") Double price, @Nullable @JsonProperty("Rate")  @JsonAlias("R")Double rate,
+                @JsonProperty("Quantity") @JsonAlias("Q") double quantity, @Nullable @JsonProperty("Total") @JsonAlias("T") Double total, @JsonProperty("TimeStamp") @JsonAlias("T") ZonedDateTime timeStamp){
 
         if(rate == null && price == null){
             throw new IllegalArgumentException("Either rate or price should be set");

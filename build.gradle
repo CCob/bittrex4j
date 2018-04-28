@@ -16,8 +16,8 @@ buildscript {
 }
 
 plugins {
-    id 'java-library'
     id 'idea'
+    id 'java-library'
     id 'maven'
     id 'jacoco'
     id 'signing'
@@ -36,6 +36,13 @@ group = 'com.github.ccob'
 archivesBaseName = "bittrex4j"
 description = "Java library for accessing the Bittrex Web API's and Web Sockets.  It currently uses a mix of v1.1 and the undocumented v2 API. "
 
+jar {
+    manifest {
+        attributes 'Implementation-Title': 'bittrex4j',
+                'Implementation-Version': version
+    }
+}
+
 documentr {
     verbose = 'false'
     documentrFile = 'documentr.json' // perhaps you want to use a different JSON file?
@@ -49,9 +56,9 @@ repositories {
 
 dependencies {
 
-    compile "com.fasterxml.jackson.core:jackson-core:2.9.2"
-    compile "com.fasterxml.jackson.core:jackson-annotations:2.9.2"
-    compile "com.fasterxml.jackson.core:jackson-databind:2.9.2"
+    compile "com.fasterxml.jackson.core:jackson-core:2.9.4"
+    compile "com.fasterxml.jackson.core:jackson-annotations:2.9.4"
+    compile "com.fasterxml.jackson.core:jackson-databind:2.9.4"
     compile "org.slf4j:slf4j-api:1.7.25"
     compile "org.apache.httpcomponents:httpclient:4.5"
     compile "com.google.code.gson:gson:2.8.2"

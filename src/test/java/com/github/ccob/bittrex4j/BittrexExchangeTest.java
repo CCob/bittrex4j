@@ -12,12 +12,10 @@
 package com.github.ccob.bittrex4j;
 
 import com.github.ccob.bittrex4j.dao.*;
+import com.github.signalr4j.client.hubs.*;
 import com.google.gson.Gson;
 import com.google.gson.internal.LinkedTreeMap;
 
-import com.github.signalr4j.client.hubs.HubConnection;
-import com.github.signalr4j.client.hubs.HubProxy;
-import com.github.signalr4j.client.hubs.SubscriptionHandler1;
 import org.apache.http.HttpResponse;
 import org.apache.http.HttpStatus;
 import org.apache.http.ProtocolVersion;
@@ -31,10 +29,7 @@ import org.apache.http.message.BasicStatusLine;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
-import org.mockito.ArgumentCaptor;
-import org.mockito.Captor;
-import org.mockito.Mock;
-import org.mockito.Mockito;
+import org.mockito.*;
 import org.mockito.runners.MockitoJUnitRunner;
 
 import java.io.ByteArrayInputStream;
@@ -43,6 +38,7 @@ import java.util.Scanner;
 
 import static org.hamcrest.CoreMatchers.equalTo;
 import static org.hamcrest.CoreMatchers.is;
+import static org.hamcrest.CoreMatchers.notNullValue;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.mockito.Matchers.*;
 import static org.mockito.Mockito.verify;
@@ -70,6 +66,9 @@ public class BittrexExchangeTest {
 
     @Captor
     private ArgumentCaptor<SubscriptionHandler1<Object>> subscriptionHandlerArgumentCaptor;
+
+    @Captor
+    private ArgumentCaptor<SubscriptionHandler1<String>> subscriptionHandlerArgumentCaptorString;
 
     private static final String NOT_FOUND = "Not Found";
     private static final String IO_ERROR = "IO Error";
@@ -103,7 +102,7 @@ public class BittrexExchangeTest {
     @Before
     public void setUp() throws IOException {
 
-        when(mockHubConnection.createHubProxy("CoreHub")).thenReturn(mockHubProxy);
+        when(mockHubConnection.createHubProxy("c2")).thenReturn(mockHubProxy);
 
         HttpResponse mockResponse = createResponse(HttpStatus.SC_OK,STATUS_OK_TEXT,"Bittrex");
 
@@ -366,15 +365,15 @@ public class BittrexExchangeTest {
 
         bittrexExchange.connectToWebSocket(() -> System.out.println("Connected"));
 
-        verify(mockHubProxy).on(eq("updateSummaryState"),subscriptionHandlerArgumentCaptor.capture(),eq(Object.class));
+        verify(mockHubProxy).on(eq("uS"),subscriptionHandlerArgumentCaptorString.capture(),eq(String.class));
 
         bittrexExchange.onUpdateSummaryState(exchangeSummaryState -> {
-            assertThat(exchangeSummaryState.getNounce(), equalTo(24724L));
-            assertThat(exchangeSummaryState.getDeltas().length, equalTo(56));
+            assertThat(exchangeSummaryState.getNounce(), equalTo(2458L));
+            assertThat(exchangeSummaryState.getDeltas().length, equalTo(77));
             lambdaCalled=true;
         });
 
-        subscriptionHandlerArgumentCaptor.getValue().run(new Gson().fromJson(loadTestResourceAsString("/UpdateSummaryState.json"),LinkedTreeMap.class));
+        subscriptionHandlerArgumentCaptorString.getValue().run(loadTestResourceAsString("/UpdateSummaryState.json"));
         assertThat(lambdaCalled,is(true));
     }
 
@@ -384,17 +383,37 @@ public class BittrexExchangeTest {
 
         bittrexExchange.connectToWebSocket(() -> System.out.println("Connected"));
 
-        verify(mockHubProxy).on(eq("updateExchangeState"), subscriptionHandlerArgumentCaptor.capture(), eq(Object.class));
+        verify(mockHubProxy).on(eq("uE"), subscriptionHandlerArgumentCaptorString.capture(), eq(String.class));
 
         bittrexExchange.onUpdateExchangeState(updateExchangeState -> {
-            assertThat(updateExchangeState.getNounce(), equalTo(50140L));
-            assertThat(updateExchangeState.getBuys().length, equalTo(5));
-            assertThat(updateExchangeState.getSells().length, equalTo(29));
-            assertThat(updateExchangeState.getFills().length, equalTo(1));
+            assertThat(updateExchangeState.getNounce(), equalTo(34940L));
+            assertThat(updateExchangeState.getBuys().length, equalTo(7));
+            assertThat(updateExchangeState.getSells().length, equalTo(8));
+            assertThat(updateExchangeState.getFills().length, equalTo(0));
             lambdaCalled=true;
         });
 
-        subscriptionHandlerArgumentCaptor.getValue().run(new Gson().fromJson(loadTestResourceAsString("/UpdateExchangeState.json"), Object.class));
+        subscriptionHandlerArgumentCaptorString.getValue().run(loadTestResourceAsString("/UpdateExchangeState.json"));
         assertThat(lambdaCalled,is(true));
+    }
+
+    @Test
+    public void shouldParseOrderDelta() throws IOException{
+
+        bittrexExchange.connectToWebSocket(() -> System.out.println("Connected"));
+
+        verify(mockHubProxy).on(eq("uO"), subscriptionHandlerArgumentCaptorString.capture(), eq(String.class));
+
+        bittrexExchange.onOrderStateChange(orderDelta -> {
+            assertThat(orderDelta.getNonce(), equalTo(3));
+            assertThat(orderDelta.getAccountUuid(),equalTo("74855331-e517-4ae7-bcf6-c5992c2db2ff"));
+            assertThat(orderDelta.getOrder(),is(notNullValue()));
+            assertThat(orderDelta.getOrder().getExchange(),equalTo("BTC-ETH"));
+            lambdaCalled=true;
+        });
+
+        subscriptionHandlerArgumentCaptorString.getValue().run(loadTestResourceAsString("/OrderDelta.json"));
+        assertThat(lambdaCalled,is(true));
+
     }
 }
