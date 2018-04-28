@@ -231,7 +231,7 @@ public class BittrexExchange implements AutoCloseable {
 
     private void connectedToWebSocket(){
 
-        if(apiKeySecret != null) {
+        if(apiKeySecret != null && apiKeySecret.getKey() != null && apiKeySecret.getSecret() != null) {
             hubProxy.invoke(String.class,"GetAuthContext",apiKeySecret.getKey())
                     .done(challenge -> {
                         String signature = EncryptionUtility.calculateHash(apiKeySecret.getSecret(),challenge,"HmacSHA512");
@@ -246,7 +246,7 @@ public class BittrexExchange implements AutoCloseable {
                                 });
                     })
                     .onError(error -> {
-                        log.error("Failed to authenticate on websocket, is the API key valid?");
+                        log.error("Failed to authenticate on websocket, is the API key valid?  Auth");
                     });
         }else{
             connectedHandler.run();
