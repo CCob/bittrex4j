@@ -217,11 +217,11 @@ public class BittrexExchange implements AutoCloseable {
     }
 
     public void queryExchangeState(String marketName, UpdateExchangeStateListener updateExchangeStateListener) {
-        hubProxy.invoke(LinkedTreeMap.class, "queryExchangeState", marketName)
+        hubProxy.invoke(String.class, "queryExchangeState", marketName)
                 .done(exchangeState -> {
-                  exchangeState.putIfAbsent("MarketName", marketName);
+                  //exchangeState.putIfAbsent("MarketName", marketName);
                   updateExchangeStateListener
-                      .onEvent(mapper.readerFor(updateExchangeStateType).readValue(new Gson().toJson(exchangeState)));
+                      .onEvent(mapper.readerFor(updateExchangeStateType).readValue(decode(exchangeState)));
                 });
   }
 
