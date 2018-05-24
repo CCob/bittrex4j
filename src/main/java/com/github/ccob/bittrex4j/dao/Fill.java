@@ -33,7 +33,7 @@ public class Fill {
     @JsonCreator
     public Fill(@Nullable @JsonProperty("Id") @JsonAlias("I") Long id, @JsonProperty("OrderType") @JsonAlias("OT") String orderType, @Nullable @JsonProperty("FillType") @JsonAlias("F") String fillType,
                 @Nullable @JsonProperty("Price") @JsonAlias("P") Double price, @Nullable @JsonProperty("Rate")  @JsonAlias("R")Double rate,
-                @JsonProperty("Quantity") @JsonAlias("Q") double quantity, @Nullable @JsonProperty("Total") @JsonAlias("T") Double total, @JsonProperty("TimeStamp") @JsonAlias("T") ZonedDateTime timeStamp){
+                @JsonProperty("Quantity") @JsonAlias("Q") double quantity, @Nullable @JsonProperty("Total") @JsonAlias("t") Double total, @JsonProperty("TimeStamp") @JsonAlias("T") ZonedDateTime timeStamp){
 
         if(rate == null && price == null){
             throw new IllegalArgumentException("Either rate or price should be set");

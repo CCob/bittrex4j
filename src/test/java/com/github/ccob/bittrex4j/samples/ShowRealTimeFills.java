@@ -62,8 +62,11 @@ public class ShowRealTimeFills {
             });
 
             bittrexExchange.connectToWebSocket(() -> {
+                bittrexExchange.queryExchangeState("BTC-ETH",exchangeState -> {
+                    System.out.println(String.format("BTC-ETH order book has %d open buy orders and %d open sell orders (500 return limit)",exchangeState.getBuys().length, exchangeState.getSells().length));
+
+                });
                 bittrexExchange.subscribeToExchangeDeltas("BTC-ETH", null);
-                bittrexExchange.subscribeToExchangeDeltas("BTC-XVG", null);
                 bittrexExchange.subscribeToMarketSummaries(null);
             });
 
