@@ -20,7 +20,7 @@ bittrex4j is published on the maven central repository and can be imported into 
 <dependency>
   <groupId>com.github.ccob</groupId>
   <artifactId>bittrex4j</artifactId>
-  <version>1.0.9</version>
+  <version>1.0.10</version>
 </dependency>
 ```
 
@@ -145,8 +145,11 @@ public class ShowRealTimeFills {
             });
 
             bittrexExchange.connectToWebSocket(() -> {
+                bittrexExchange.queryExchangeState("BTC-ETH",exchangeState -> {
+                    System.out.println(String.format("BTC-ETH order book has %d open buy orders and %d open sell orders (500 return limit)",exchangeState.getBuys().length, exchangeState.getSells().length));
+
+                });
                 bittrexExchange.subscribeToExchangeDeltas("BTC-ETH", null);
-                bittrexExchange.subscribeToExchangeDeltas("BTC-XVG", null);
                 bittrexExchange.subscribeToMarketSummaries(null);
             });
 
