@@ -605,11 +605,11 @@ public class BittrexExchange implements AutoCloseable {
             }else{
                 log.warn("HTTP request failed with error code {} and reason {}",responseCode,httpResponse.getStatusLine().getReasonPhrase());
                 task.cancel();
-                return new Response<>(false,httpResponse.getStatusLine().getReasonPhrase(),null);
+                return new Response<>(false,httpResponse.getStatusLine().getReasonPhrase(),null, "");
             }
 
         } catch (NoSuchAlgorithmException | IOException | InvalidKeyException e) {
-            return new Response<>(false,e.getMessage(),null);
+            return new Response<>(false,e.getMessage(),null, "");
         } finally {
 
             if(httpResponse != null){

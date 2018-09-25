@@ -33,13 +33,14 @@ public class Market {
     private String notice;
     private boolean isSponsored;
     private String logoUrl;
+    private boolean isRestricted;
 
     @JsonCreator
     public Market( @JsonProperty("MarketCurrency") String marketCurrency, @JsonProperty("BaseCurrency") String baseCurrency,
                    @JsonProperty("MarketCurrencyLong") String marketCurrencyLong, @JsonProperty("BaseCurrencyLong") String baseCurrencyLong, @JsonProperty("MinTradeSize") double minTradeSize,
                    @JsonProperty("MarketName") String marketName, @JsonProperty("IsActive") boolean isActive,
                    @JsonProperty("Created") ZonedDateTime created, @JsonProperty("Notice") String notice,
-                   @JsonProperty("IsSponsored") boolean isSponsored, @JsonProperty("LogoUrl") String logoUrl) {
+                   @JsonProperty("IsSponsored") boolean isSponsored, @JsonProperty("LogoUrl") String logoUrl, @JsonProperty("IsRestricted") boolean isRestricted) {
         this.marketCurrency = marketCurrency;
         this.baseCurrency = baseCurrency;
         this.marketCurrencyLong = marketCurrencyLong;
@@ -51,6 +52,11 @@ public class Market {
         this.notice = notice;
         this.isSponsored = isSponsored;
         this.logoUrl = logoUrl;
+        this.isRestricted = isRestricted;
+    }
+
+    public boolean isRestricted() {
+        return isRestricted;
     }
 
     public String getMarketCurrency() {
