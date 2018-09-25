@@ -13,9 +13,12 @@ import org.apache.http.cookie.Cookie;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import javax.script.*;
+import javax.script.ScriptEngine;
+import javax.script.ScriptEngineManager;
+import javax.script.ScriptException;
 import java.io.IOException;
 import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.net.URLEncoder;
@@ -24,9 +27,6 @@ import java.util.Timer;
 import java.util.TimerTask;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
-import java.util.stream.Collectors;
-
-import static javax.script.ScriptContext.ENGINE_SCOPE;
 
 public class CloudFlareAuthorizer {
 
@@ -160,7 +160,7 @@ public class CloudFlareAuthorizer {
             }
 
             log.debug(String.format("CloudFlare JS challenge code: %s", jsCode));
-            return new BigDecimal(engine.eval(jsCode).toString()).setScale(10,BigDecimal.ROUND_HALF_UP).toString();
+            return new BigDecimal(engine.eval(jsCode).toString()).setScale(10, RoundingMode.HALF_UP).toString();
         }
         throw new IllegalStateException("BUG: could not find initial CF JS challenge code");
     }
