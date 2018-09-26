@@ -19,14 +19,16 @@ public class Response<Result> {
     boolean success;
     String message;
     Result result;
+    String explanation;
 
     @JsonCreator
     public Response(@JsonProperty("success") boolean success,
                     @JsonProperty("message") String message,
-                    @JsonProperty("result") Result result) {
+                    @JsonProperty("result") Result result, @JsonProperty("explanation") String explanation) {
         this.success = success;
         this.message = message;
         this.result = result;
+        this.explanation = explanation;
     }
 
     public boolean isSuccess() {
@@ -40,4 +42,6 @@ public class Response<Result> {
     public Result getResult() {
         return result;
     }
+
+    public String getExplanation() {return explanation;}
 }
