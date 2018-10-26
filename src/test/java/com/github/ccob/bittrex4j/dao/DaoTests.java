@@ -14,6 +14,7 @@ import javax.annotation.Nullable;
 import java.time.ZonedDateTime;
 import java.util.Collection;
 import java.util.Set;
+import java.math.BigDecimal;
 
 import static pl.pojo.tester.api.assertion.Assertions.assertPojoMethodsFor;
 import static pl.pojo.tester.api.assertion.Method.CONSTRUCTOR;
@@ -61,8 +62,8 @@ public class DaoTests {
     }
 
     private void assertPojoMethodsForFill(Method method[]){
-        final Object[] constructorParameters = {1L, "string1", "string2", Double.valueOf(2), null, 4.0, Double.valueOf(5), ZonedDateTime.now(), Integer.valueOf(2)};
-        final Class[] constructorParameterTypes = {Long.class, String.class, String.class, Double.class, Double.class, double.class, Double.class, ZonedDateTime.class, Integer.class};
+        final Object[] constructorParameters = {1L, "string1", "string2", BigDecimal.valueOf(2), null, BigDecimal.valueOf(4.0), BigDecimal.valueOf(5), ZonedDateTime.now(), Integer.valueOf(2)};
+        final Class[] constructorParameterTypes = {Long.class, String.class, String.class, BigDecimal.class, BigDecimal.class, BigDecimal.class, BigDecimal.class, ZonedDateTime.class, Integer.class};
         assertPojoMethodsFor(classUnderTest)
                 .create(classUnderTest, constructorParameters, constructorParameterTypes)
                 .testing(method)

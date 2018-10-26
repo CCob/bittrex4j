@@ -8,6 +8,7 @@ import java.io.FileInputStream;
 import java.io.IOException;
 import java.util.Arrays;
 import java.util.Properties;
+import java.math.BigDecimal;
 
 public class ShowRealTimeFills {
 
@@ -33,9 +34,9 @@ public class ShowRealTimeFills {
             });
 
             bittrexExchange.onUpdateExchangeState(updateExchangeState -> {
-                double volume = Arrays.stream(updateExchangeState.getFills())
-                        .mapToDouble(Fill::getQuantity)
-                        .sum();
+                BigDecimal volume = Arrays.stream(updateExchangeState.getFills())
+                        .map(Fill::getQuantity)
+                        .reduce((quantity, accumulator) -> quantity.add(accumulator)).get();
 
                 if(updateExchangeState.getFills().length > 0) {
                     System.out.println(String.format("N: %d, %02f volume across %d fill(s) for %s", updateExchangeState.getNounce(),

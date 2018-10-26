@@ -17,15 +17,16 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 
 import javax.annotation.Nullable;
 import java.time.ZonedDateTime;
+import java.math.BigDecimal;
 
 public class Fill {
 
     Long id;
     String orderType;
     String fillType;
-    double price;
-    double quantity;
-    double total;
+    BigDecimal price;
+    BigDecimal quantity;
+    BigDecimal total;
     ZonedDateTime timeStamp;
     Integer fillId;
 
@@ -33,8 +34,8 @@ public class Fill {
 
     @JsonCreator
     public Fill(@Nullable @JsonProperty("Id") @JsonAlias("I") Long id, @JsonProperty("OrderType") @JsonAlias("OT") String orderType, @Nullable @JsonProperty("FillType") @JsonAlias("F") String fillType,
-                @Nullable @JsonProperty("Price") @JsonAlias("P") Double price, @Nullable @JsonProperty("Rate")  @JsonAlias("R")Double rate,
-                @JsonProperty("Quantity") @JsonAlias("Q") double quantity, @Nullable @JsonProperty("Total") @JsonAlias("t") Double total, @JsonProperty("TimeStamp") @JsonAlias("T") ZonedDateTime timeStamp,
+                @Nullable @JsonProperty("Price") @JsonAlias("P") BigDecimal price, @Nullable @JsonProperty("Rate")  @JsonAlias("R") BigDecimal rate,
+                @JsonProperty("Quantity") @JsonAlias("Q") BigDecimal quantity, @Nullable @JsonProperty("Total") @JsonAlias("t") BigDecimal total, @JsonProperty("TimeStamp") @JsonAlias("T") ZonedDateTime timeStamp,
                 @Nullable @JsonProperty("FI") Integer fillId){
 
         if(rate == null && price == null){
@@ -61,7 +62,7 @@ public class Fill {
         if(total!=null){
             this.total = total;
         }else{
-            this.total = this.price*this.quantity;
+            this.total = this.price.multiply(this.quantity);
         }
     }
     
@@ -73,11 +74,11 @@ public class Fill {
         return orderType;
     }
 
-    public double getPrice() {
+    public BigDecimal getPrice() {
         return price;
     }
 
-    public double getQuantity() {
+    public BigDecimal getQuantity() {
         return quantity;
     }
 
@@ -85,7 +86,7 @@ public class Fill {
         return timeStamp;
     }
 
-    public double getTotal() {
+    public BigDecimal getTotal() {
         return total;
     }
 
