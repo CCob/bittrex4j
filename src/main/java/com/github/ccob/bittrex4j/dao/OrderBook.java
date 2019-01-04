@@ -17,6 +17,10 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 
 public class OrderBook {
 
+    public enum TYPE {
+        buy, sell, both;
+    }
+
     @JsonProperty("buy")
     private List<OrderBookEntry> buy;
 
