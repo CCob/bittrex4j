@@ -248,7 +248,7 @@ public class BittrexExchangeTest {
         assertThat(result.getResult().getSell().size(), equalTo(100));
 
         setExpectationForJsonResultOnWebAPICall(loadTestResourceAsString("/OrderBook-buy.json"));
-        Response<OrderBookEntry[]> resultBuy = (Response<OrderBookEntry[]>) bittrexExchange.getOrderBook("ANY", TYPE.both);
+        Response<OrderBookEntry[]> resultBuy = (Response<OrderBookEntry[]>) bittrexExchange.getOrderBook("ANY", TYPE.buy);
 
 
         assertThat(result.isSuccess(), is(true));
