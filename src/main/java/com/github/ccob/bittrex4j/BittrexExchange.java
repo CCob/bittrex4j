@@ -392,7 +392,7 @@ public class BittrexExchange implements AutoCloseable {
     public Response<Currency[]> getCurrencies() {
         return getResponse(new TypeReference<Response<Currency[]>>(){}, UrlBuilder.v2()
                 .withGroup(CURRENCIES)
-                .withMethod("getcurrenices"));
+                .withMethod("getcurrencies"));
     }
 
     public Response<WalletHealthResult[]> getWalletHealth() {
