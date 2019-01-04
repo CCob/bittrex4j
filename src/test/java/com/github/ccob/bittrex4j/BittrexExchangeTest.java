@@ -12,6 +12,7 @@
 package com.github.ccob.bittrex4j;
 
 import com.github.ccob.bittrex4j.dao.*;
+import com.github.ccob.bittrex4j.dao.OrderBook.TYPE;
 import com.github.signalr4j.client.hubs.*;
 import com.google.gson.Gson;
 import com.google.gson.internal.LinkedTreeMap;
@@ -240,7 +241,15 @@ public class BittrexExchangeTest {
     @Test
     public void shouldReturnOrderBook() throws IOException{
         setExpectationForJsonResultOnWebAPICall(loadTestResourceAsString("/OrderBook.json"));
-        Response<OrderBook> result = (Response<OrderBook>) bittrexExchange.getOrderBook("ANY", "both");
+        Response<OrderBook> result = (Response<OrderBook>) bittrexExchange.getOrderBook("ANY", TYPE.both);
+
+        assertThat(result.isSuccess(), is(true));
+        assertThat(result.getResult().getBuy().size(), equalTo(100));
+        assertThat(result.getResult().getSell().size(), equalTo(100));
+
+        setExpectationForJsonResultOnWebAPICall(loadTestResourceAsString("/OrderBook-buy.json"));
+        Response<OrderBookEntry[]> resultBuy = (Response<OrderBookEntry[]>) bittrexExchange.getOrderBook("ANY", TYPE.both);
+
 
         assertThat(result.isSuccess(), is(true));
         assertThat(result.getResult().getBuy().size(), equalTo(100));
