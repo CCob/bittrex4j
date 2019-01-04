@@ -340,6 +340,22 @@ public class BittrexExchange implements AutoCloseable {
                 .withArgument("market",market));
     }
 
+    public Response<?> getOrderBook(String market, String type) {
+        if (type.equals("buy") || type.equals("sell")) {
+            return getResponse(new TypeReference<Response<OrderBookEntry[]>>(){}, UrlBuilder.v1_1()
+                    .withGroup(PUBLIC)
+                    .withMethod("getorderbook")
+                    .withArgument("market", market)
+                    .withArgument("type", type));
+        } else {
+             return getResponse(new TypeReference<Response<OrderBook>>(){}, UrlBuilder.v1_1()
+                    .withGroup(PUBLIC)
+                    .withMethod("getorderbook")
+                    .withArgument("market", market)
+                    .withArgument("type", "both"));
+        }
+    }
+
     public Response<MarketOrdersResult> getMarketOrderBook(String market) {
         return getResponse(new TypeReference<Response<MarketOrdersResult>>(){}, UrlBuilder.v2()
                 .withGroup(MARKET)
@@ -393,6 +409,12 @@ public class BittrexExchange implements AutoCloseable {
         return getResponse(new TypeReference<Response<Currency[]>>(){}, UrlBuilder.v2()
                 .withGroup(CURRENCIES)
                 .withMethod("getcurrencies"));
+    }
+
+    public Response<Ticker> getTicker(String market) {
+        return getResponse(new TypeReference<Response<Ticker>>(){}, UrlBuilder.v1_1()
+                .withGroup(PUBLIC)
+                .withMethod("getticker"));
     }
 
     public Response<WalletHealthResult[]> getWalletHealth() {
