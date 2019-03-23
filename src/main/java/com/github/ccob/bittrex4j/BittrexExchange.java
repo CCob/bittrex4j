@@ -12,6 +12,7 @@
 package com.github.ccob.bittrex4j;
 
 import com.fasterxml.jackson.core.type.TypeReference;
+import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.JavaType;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.module.SimpleModule;
@@ -125,6 +126,7 @@ public class BittrexExchange implements AutoCloseable {
         module.addDeserializer(ZonedDateTime.class, new DateTimeDeserializer());
         mapper.registerModule(module);
 
+        mapper.configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
         updateExchangeStateType = mapper.getTypeFactory().constructType(UpdateExchangeState.class);
         exchangeSummaryStateType = mapper.getTypeFactory().constructType(ExchangeSummaryState.class);
         orderDeltaStateType = mapper.getTypeFactory().constructType(OrderDelta.class);
