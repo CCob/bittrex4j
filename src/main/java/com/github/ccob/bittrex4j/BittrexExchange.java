@@ -12,12 +12,14 @@
 package com.github.ccob.bittrex4j;
 
 import com.fasterxml.jackson.core.type.TypeReference;
+import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.JavaType;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.module.SimpleModule;
 import com.github.ccob.bittrex4j.cloudflare.CloudFlareAuthorizer;
 import com.github.ccob.bittrex4j.dao.*;
 import com.github.ccob.bittrex4j.dao.Currency;
+import com.github.ccob.bittrex4j.dao.OrderBook.TYPE;
 import com.github.ccob.bittrex4j.listeners.InvocationResult;
 import com.github.ccob.bittrex4j.listeners.Listener;
 import com.github.ccob.bittrex4j.listeners.UpdateExchangeStateListener;
@@ -124,6 +126,7 @@ public class BittrexExchange implements AutoCloseable {
         module.addDeserializer(ZonedDateTime.class, new DateTimeDeserializer());
         mapper.registerModule(module);
 
+        mapper.configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
         updateExchangeStateType = mapper.getTypeFactory().constructType(UpdateExchangeState.class);
         exchangeSummaryStateType = mapper.getTypeFactory().constructType(ExchangeSummaryState.class);
         orderDeltaStateType = mapper.getTypeFactory().constructType(OrderDelta.class);
@@ -340,6 +343,22 @@ public class BittrexExchange implements AutoCloseable {
                 .withArgument("market",market));
     }
 
+    public Response<?> getOrderBook(String market, OrderBook.TYPE type) {
+        if (type == TYPE.buy || type == TYPE.sell) {
+            return getResponse(new TypeReference<Response<OrderBookEntry[]>>(){}, UrlBuilder.v1_1()
+                    .withGroup(PUBLIC)
+                    .withMethod("getorderbook")
+                    .withArgument("market", market)
+                    .withArgument("type", type.toString()));
+        } else {
+             return getResponse(new TypeReference<Response<OrderBook>>(){}, UrlBuilder.v1_1()
+                    .withGroup(PUBLIC)
+                    .withMethod("getorderbook")
+                    .withArgument("market", market)
+                    .withArgument("type", TYPE.both.toString()));
+        }
+    }
+
     public Response<MarketOrdersResult> getMarketOrderBook(String market) {
         return getResponse(new TypeReference<Response<MarketOrdersResult>>(){}, UrlBuilder.v2()
                 .withGroup(MARKET)
@@ -392,7 +411,13 @@ public class BittrexExchange implements AutoCloseable {
     public Response<Currency[]> getCurrencies() {
         return getResponse(new TypeReference<Response<Currency[]>>(){}, UrlBuilder.v2()
                 .withGroup(CURRENCIES)
-                .withMethod("getcurrenices"));
+                .withMethod("getcurrencies"));
+    }
+
+    public Response<Ticker> getTicker(String market) {
+        return getResponse(new TypeReference<Response<Ticker>>(){}, UrlBuilder.v1_1()
+                .withGroup(PUBLIC)
+                .withMethod("getticker"));
     }
 
     public Response<WalletHealthResult[]> getWalletHealth() {
