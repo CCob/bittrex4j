@@ -9,6 +9,9 @@
  */
 
 buildscript {
+    repositories {
+        mavenLocal()
+    }
     dependencies {
         classpath "gradle.plugin.synapticloop:documentr:2.9.0"
         classpath 'net.researchgate:gradle-release:2.6.0'
@@ -23,6 +26,7 @@ plugins {
     id 'signing'
     id 'synapticloop.documentr' version '2.9.0'
     id 'net.researchgate.release' version '2.6.0'
+    id 'maven-publish'
 }
 
 jacocoTestReport {
@@ -49,6 +53,7 @@ documentr {
 }
 
 repositories {
+    mavenLocal()
     mavenCentral()
     maven { url "https://oss.sonatype.org/content/repositories/snapshots"}
     maven { url "https://oss.sonatype.org/service/local/repositories/releases/content/"}
