@@ -91,6 +91,8 @@ public class BittrexExchange implements AutoCloseable {
 
     private int retries;
 
+    private boolean reconnect = false;
+
     private class ReconnectTimerTask extends TimerTask{
         @Override
         public void run() {
@@ -114,12 +116,18 @@ public class BittrexExchange implements AutoCloseable {
     public BittrexExchange(int retries, String apikey, String secret) throws IOException {
         this(retries,apikey,secret,new HttpFactory());
     }
-
+    public BittrexExchange(int retries, String apikey, String secret, boolean reconnect) throws IOException {
+        this(retries,apikey,secret,new HttpFactory(), reconnect);
+    }
     public BittrexExchange(int retries, String apikey, String secret, HttpFactory httpFactory) throws IOException {
+        this(retries,apikey, secret, httpFactory, true);
+    }
+    public BittrexExchange(int retries, String apikey, String secret, HttpFactory httpFactory, boolean reconnect) throws IOException {
 
         this.apiKeySecret = new ApiKeySecret(apikey,secret);
         this.httpFactory = httpFactory;
         this.retries = retries;
+        this.reconnect = reconnect;
 
         mapper = new ObjectMapper();
         SimpleModule module = new SimpleModule();
@@ -222,11 +230,11 @@ public class BittrexExchange implements AutoCloseable {
     public void queryExchangeState(String marketName, UpdateExchangeStateListener updateExchangeStateListener) {
         hubProxy.invoke(String.class, "queryExchangeState", marketName)
                 .done(exchangeState -> {
-                  //exchangeState.putIfAbsent("MarketName", marketName);
-                  updateExchangeStateListener
-                      .onEvent(mapper.readerFor(updateExchangeStateType).readValue(decode(exchangeState)));
+                    //exchangeState.putIfAbsent("MarketName", marketName);
+                    updateExchangeStateListener
+                            .onEvent(mapper.readerFor(updateExchangeStateType).readValue(decode(exchangeState)));
                 });
-  }
+    }
 
     public void disconnectFromWebSocket(){
         hubConnection.stop();
@@ -286,7 +294,8 @@ public class BittrexExchange implements AutoCloseable {
             } else {
                 log.error("Failed to perform CloudFlare authorization on startup: {}", e.toString());
             }
-            reconnectTimer.schedule(new ReconnectTimerTask(),5000);
+            if (reconnect)
+                reconnectTimer.schedule(new ReconnectTimerTask(),5000);
         }
     }
 
@@ -296,11 +305,12 @@ public class BittrexExchange implements AutoCloseable {
 
     private void setupStateChangeHandler() {
         hubConnection.stateChanged((oldState, newState) -> {
-                if (newState == ConnectionState.Disconnected) {
-                    reconnectTimer.schedule(new ReconnectTimerTask(), 5000);
+                    if (newState == ConnectionState.Disconnected) {
+                        if (reconnect)
+                            reconnectTimer.schedule(new ReconnectTimerTask(), 5000);
+                    }
+                    websocketStateChangeListener.notifyObservers(new ConnectionStateChange(oldState, newState));
                 }
-                websocketStateChangeListener.notifyObservers(new ConnectionStateChange(oldState, newState));
-            }
         );
     }
 
@@ -351,7 +361,7 @@ public class BittrexExchange implements AutoCloseable {
                     .withArgument("market", market)
                     .withArgument("type", type.toString()));
         } else {
-             return getResponse(new TypeReference<Response<OrderBook>>(){}, UrlBuilder.v1_1()
+            return getResponse(new TypeReference<Response<OrderBook>>(){}, UrlBuilder.v1_1()
                     .withGroup(PUBLIC)
                     .withMethod("getorderbook")
                     .withArgument("market", market)
