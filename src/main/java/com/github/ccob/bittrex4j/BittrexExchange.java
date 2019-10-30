@@ -90,8 +90,7 @@ public class BittrexExchange implements AutoCloseable {
     private Timer reconnectTimer = new Timer();
 
     private int retries;
-
-    private boolean reconnect = false;
+    private boolean reconnect;
 
     private class ReconnectTimerTask extends TimerTask{
         @Override
