@@ -14,6 +14,8 @@ public class PrintMarketsByVolume {
 
     public static void main(String[] args) throws IOException {
 
+//        System.setProperty("http.proxyHost", "localhost");
+//        System.setProperty("http.proxyPort", "3128");
         BittrexExchange bittrexExchange = new BittrexExchange();
 
         Response<MarketSummaryResult[]> markets = bittrexExchange.getMarketSummaries();
