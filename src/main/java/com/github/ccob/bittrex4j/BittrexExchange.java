@@ -101,33 +101,26 @@ public class BittrexExchange implements AutoCloseable {
         }
     }
 
-    public BittrexExchange() throws IOException {
+    public BittrexExchange() {
         this(5);
     }
 
-    public BittrexExchange(String apikey, String secret) throws IOException {
+    public BittrexExchange(String apikey, String secret) {
         this(5,apikey,secret,new HttpFactory());
     }
 
-    public BittrexExchange(int retries) throws IOException {
+    public BittrexExchange(int retries) {
         this(retries,null,null);
     }
 
-    public BittrexExchange(int retries, String apikey, String secret) throws IOException {
+    public BittrexExchange(int retries, String apikey, String secret) {
         this(retries,apikey,secret,new HttpFactory());
     }
-    public BittrexExchange(int retries, String apikey, String secret, boolean reconnect) throws IOException {
-        this(retries,apikey,secret,new HttpFactory(), reconnect);
-    }
-    public BittrexExchange(int retries, String apikey, String secret, HttpFactory httpFactory) throws IOException {
-        this(retries,apikey, secret, httpFactory, true);
-    }
-    public BittrexExchange(int retries, String apikey, String secret, HttpFactory httpFactory, boolean reconnect) throws IOException {
-
+    public BittrexExchange(int retries, String apikey, String secret, HttpFactory httpFactory) {
         this.apiKeySecret = new ApiKeySecret(apikey,secret);
         this.httpFactory = httpFactory;
         this.retries = retries;
-        this.reconnect = reconnect;
+        this.reconnect = retries > 0;
 
         mapper = new ObjectMapper();
         SimpleModule module = new SimpleModule();
@@ -335,7 +328,7 @@ public class BittrexExchange implements AutoCloseable {
                 .withArgument("tickInterval",tickInterval.toString()));
     }
 
-    /**
+    /*
      * v2 version of getMarketSummary seems to return a different market than requested on occassion,
      * so both v1 and v2 flavors are available
      */
