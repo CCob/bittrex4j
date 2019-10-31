@@ -27,7 +27,7 @@ public class SocketTest {
         prop.load(new FileInputStream("test_keys.properties"));
         BittrexExchange bittrexExchange = new BittrexExchange(0,prop.getProperty("apiKey"),prop.getProperty("apiSecret"));
 
-        CountDownLatch latch = new CountDownLatch(3);
+        CountDownLatch latch = new CountDownLatch(1);
         bittrexExchange.onWebsocketError( e -> {
             System.out.println("onWebsocketError: " + e);
         });
@@ -40,12 +40,10 @@ public class SocketTest {
         bittrexExchange.connectToWebSocket( () -> {
             try {
                 System.out.println("connectToWebSocket - ok");
-                latch.countDown();
 
                 bittrexExchange
                         .queryExchangeState(marketName, exchangeState -> {
                             System.out.println("queryExchangeState - " + exchangeState.getMarketName());
-                            latch.countDown();
                             bittrexExchange.subscribeToExchangeDeltas(marketName, b -> System.out.println("subscribeToExchangeDeltas - " + b));
                         });
 
@@ -62,7 +60,7 @@ public class SocketTest {
             }
         });
 
-        latch.await(10, TimeUnit.SECONDS);
+        latch.await(15, TimeUnit.SECONDS);
         assertThat(latch.getCount(), is(0L));
 
         System.out.println("connectTest - " + (latch.getCount() == 0));
