@@ -48,7 +48,7 @@ public class HttpFactory {
                         // Return direct route
                         return new HttpRoute(host);
                     }
-                    if (hostname.equals("bittrex.com") && System.getProperty("http.nonProxyHosts", "localhost|127.*|[::1]").contains("bittrex.com")) {
+                    if (System.getProperty("http.nonProxyHosts", "localhost|127.0.0.1|[::1]").toLowerCase().contains(hostname.toLowerCase())) {
                         // Return direct route
                         return new HttpRoute(host);
                     }
