@@ -142,7 +142,7 @@ public class BittrexExchange implements AutoCloseable {
             httpClientContext = httpFactory.createClientContext();
             CloudFlareAuthorizer cloudFlareAuthorizer = new CloudFlareAuthorizer(httpClient,httpClientContext);
             return cloudFlareAuthorizer.getAuthorizationResult("https://bittrex.com");
-        } catch (ScriptException e) {
+        } catch (Exception e) {
             log.error("Failed to perform CloudFlare authorization",e);
             return false;
         }

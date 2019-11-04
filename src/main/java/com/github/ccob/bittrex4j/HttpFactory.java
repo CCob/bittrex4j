@@ -14,25 +14,55 @@ package com.github.ccob.bittrex4j;
 import com.github.signalr4j.client.Logger;
 import com.github.signalr4j.client.Platform;
 import com.github.signalr4j.client.hubs.HubConnection;
+import org.apache.http.HttpException;
 import org.apache.http.HttpHost;
+import org.apache.http.HttpRequest;
 import org.apache.http.client.HttpClient;
 import org.apache.http.client.protocol.HttpClientContext;
+import org.apache.http.conn.routing.HttpRoute;
+import org.apache.http.conn.routing.HttpRoutePlanner;
 import org.apache.http.impl.client.HttpClients;
+import org.apache.http.impl.conn.DefaultProxyRoutePlanner;
+import org.apache.http.protocol.HttpContext;
 
 import java.net.InetSocketAddress;
 import java.net.Proxy;
 
 public class HttpFactory {
-    public HttpClient createClient(){
+    public HttpClient createClient() {
+
         HttpHost proxy = null;
+        HttpRoutePlanner routePlanner = null;
+
         if (System.getProperty("http.proxyHost") != null) {
             proxy = new HttpHost(System.getProperty("http.proxyHost"), Integer.parseInt(System.getProperty("http.proxyPort", "3128")));
+
+            routePlanner = new DefaultProxyRoutePlanner(proxy) {
+                @Override
+                public HttpRoute determineRoute(
+                        final HttpHost host,
+                        final HttpRequest request,
+                        final HttpContext context) throws HttpException {
+                    String hostname = host.getHostName();
+                    if (hostname.equals("127.0.0.1") || hostname.equalsIgnoreCase("localhost")) {
+                        // Return direct route
+                        return new HttpRoute(host);
+                    }
+                    if (hostname.equals("bittrex.com") && System.getProperty("http.nonProxyHosts", "localhost|127.*|[::1]").contains("bittrex.com")) {
+                        // Return direct route
+                        return new HttpRoute(host);
+                    }
+
+                    return super.determineRoute(host, request, context);
+                }
+            };
         }
 
         return HttpClients
                 .custom()
                 //HACK: since we cant control the user agent inside the signalr library
                 .setUserAgent(Utils.getUserAgent())
+                .setRoutePlanner(routePlanner)
                 .setProxy(proxy)
                 .build();
     }

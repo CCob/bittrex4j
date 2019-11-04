@@ -15,6 +15,10 @@ public class ShowRealTimeFills {
 
         System.out.println("Press any key to quit");
 
+        System.setProperty("http.proxyHost", "localhost");
+        System.setProperty("http.proxyPort", "3128");
+        System.setProperty("http.nonProxyHosts","bittrex.com|localhost");
+
         Properties prop = new Properties();
         prop.load(new FileInputStream("test_keys.properties"));
 

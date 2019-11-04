@@ -22,15 +22,16 @@ public class SocketTest {
 
         System.setProperty("http.proxyHost", "localhost");
         System.setProperty("http.proxyPort", "3128");
+//        System.setProperty("http.nonProxyHosts","bittrex.com|localhost");
 
         Properties prop = new Properties();
         prop.load(new FileInputStream("test_keys.properties"));
         BittrexExchange bittrexExchange = new BittrexExchange(0,prop.getProperty("apiKey"),prop.getProperty("apiSecret"));
 
         CountDownLatch latch = new CountDownLatch(1);
-        bittrexExchange.onWebsocketError( e -> {
-            System.out.println("onWebsocketError: " + e);
-        });
+            bittrexExchange.onWebsocketError(e -> {
+                System.out.println("onWebsocketError: " + e);
+            });
 
         bittrexExchange.onWebsocketStateChange( state -> {
             System.out.println("reconnectSubscriptions.onWebsocketStateChange: "+ state.getNewState());
