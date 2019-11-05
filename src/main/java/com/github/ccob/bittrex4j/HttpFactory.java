@@ -11,6 +11,7 @@
 
 package com.github.ccob.bittrex4j;
 
+import com.github.ccob.bittrex4j.cloudflare.CloudFlareAuthorizer;
 import com.github.signalr4j.client.Logger;
 import com.github.signalr4j.client.Platform;
 import com.github.signalr4j.client.hubs.HubConnection;
@@ -24,11 +25,15 @@ import org.apache.http.conn.routing.HttpRoutePlanner;
 import org.apache.http.impl.client.HttpClients;
 import org.apache.http.impl.conn.DefaultProxyRoutePlanner;
 import org.apache.http.protocol.HttpContext;
+import org.slf4j.LoggerFactory;
 
 import java.net.InetSocketAddress;
 import java.net.Proxy;
+import java.util.concurrent.TimeUnit;
 
 public class HttpFactory {
+    private static org.slf4j.Logger log = LoggerFactory.getLogger(CloudFlareAuthorizer.class);
+
     public HttpClient createClient() {
 
         HttpHost proxy = null;
@@ -37,12 +42,18 @@ public class HttpFactory {
         if (System.getProperty("http.proxyHost") != null) {
             proxy = new HttpHost(System.getProperty("http.proxyHost"), Integer.parseInt(System.getProperty("http.proxyPort", "3128")));
 
+            log.info("Proxy {}://{}:{} active", proxy.getSchemeName(), proxy.getHostName(), proxy.getPort());
+
+
             routePlanner = new DefaultProxyRoutePlanner(proxy) {
                 @Override
                 public HttpRoute determineRoute(
                         final HttpHost host,
                         final HttpRequest request,
                         final HttpContext context) throws HttpException {
+
+                    log.info("determineRoute: {} {} {}", host.toHostString(), request, context);
+
                     String hostname = host.getHostName();
                     if (hostname.equals("127.0.0.1") || hostname.equalsIgnoreCase("localhost")) {
                         // Return direct route
