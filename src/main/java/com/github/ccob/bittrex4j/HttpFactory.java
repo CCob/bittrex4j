@@ -11,9 +11,7 @@
 
 package com.github.ccob.bittrex4j;
 
-import com.github.ccob.bittrex4j.cloudflare.CloudFlareAuthorizer;
 import com.github.signalr4j.client.Logger;
-import com.github.signalr4j.client.Platform;
 import com.github.signalr4j.client.hubs.HubConnection;
 import org.apache.http.HttpException;
 import org.apache.http.HttpHost;
@@ -27,12 +25,8 @@ import org.apache.http.impl.conn.DefaultProxyRoutePlanner;
 import org.apache.http.protocol.HttpContext;
 import org.slf4j.LoggerFactory;
 
-import java.net.InetSocketAddress;
-import java.net.Proxy;
-import java.util.concurrent.TimeUnit;
-
 public class HttpFactory {
-    private static org.slf4j.Logger log = LoggerFactory.getLogger(CloudFlareAuthorizer.class);
+    private static org.slf4j.Logger log = LoggerFactory.getLogger(HttpFactory.class);
 
     public HttpClient createClient() {
 

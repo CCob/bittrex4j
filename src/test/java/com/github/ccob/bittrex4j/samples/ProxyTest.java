@@ -1,13 +1,10 @@
 package com.github.ccob.bittrex4j.samples;
 
 import com.github.ccob.bittrex4j.BittrexExchange;
-import com.github.ccob.bittrex4j.dao.Order;
-import com.github.ccob.bittrex4j.dao.Response;
 import org.junit.Test;
 
 import java.io.FileInputStream;
 import java.io.IOException;
-import java.util.List;
 import java.util.Properties;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
@@ -15,14 +12,14 @@ import java.util.concurrent.TimeUnit;
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.MatcherAssert.assertThat;
 
-public class SocketTest {
+public class ProxyTest {
 
     @Test
     public void connectTest() throws IOException, InterruptedException {
 
         System.setProperty("http.proxyHost", "localhost");
         System.setProperty("http.proxyPort", "3128");
-//        System.setProperty("http.nonProxyHosts","bittrex.com|localhost");
+        System.setProperty("http.nonProxyHosts","localhost");
 
         Properties prop = new Properties();
         prop.load(new FileInputStream("test_keys.properties"));
