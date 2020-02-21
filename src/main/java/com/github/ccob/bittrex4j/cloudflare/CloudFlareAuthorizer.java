@@ -162,7 +162,7 @@ public class CloudFlareAuthorizer {
             log.debug(String.format("CloudFlare JS challenge code: %s", jsCode));
             return new BigDecimal(engine.eval(jsCode).toString()).setScale(10, RoundingMode.HALF_UP).toString();
         }
-        throw new IllegalStateException("BUG: could not find initial CF JS challenge code");
+        throw new IllegalStateException("BUG: could not find initial CF JS challenge code in: "+responseHtml);
     }
 
 }
