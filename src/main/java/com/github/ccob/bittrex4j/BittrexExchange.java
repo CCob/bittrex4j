@@ -17,19 +17,16 @@ import com.fasterxml.jackson.databind.JavaType;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.module.SimpleModule;
 import com.github.ccob.bittrex4j.cloudflare.CloudFlareAuthorizer;
-import com.github.ccob.bittrex4j.dao.*;
 import com.github.ccob.bittrex4j.dao.Currency;
+import com.github.ccob.bittrex4j.dao.*;
 import com.github.ccob.bittrex4j.dao.OrderBook.TYPE;
 import com.github.ccob.bittrex4j.listeners.InvocationResult;
 import com.github.ccob.bittrex4j.listeners.Listener;
 import com.github.ccob.bittrex4j.listeners.UpdateExchangeStateListener;
 import com.github.ccob.bittrex4j.listeners.UpdateSummaryStateListener;
 import com.github.signalr4j.client.ConnectionState;
-import com.github.signalr4j.client.Platform;
 import com.github.signalr4j.client.hubs.HubConnection;
 import com.github.signalr4j.client.hubs.HubProxy;
-import com.google.gson.Gson;
-import com.google.gson.internal.LinkedTreeMap;
 import org.apache.commons.codec.binary.Base64;
 import org.apache.http.HttpHeaders;
 import org.apache.http.client.HttpClient;
@@ -40,7 +37,6 @@ import org.apache.http.client.protocol.HttpClientContext;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import javax.script.ScriptException;
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStream;
@@ -258,9 +254,8 @@ public class BittrexExchange implements AutoCloseable {
 
     private void startConnection(){
         try {
-
-            hubConnection = httpFactory.createHubConnection("https://socket.bittrex.com",null,true,
-                    new SignalRLoggerDecorator(log_sockets));
+            SignalRCriticalLogger logger = new SignalRCriticalLogger(log_sockets);
+            hubConnection = httpFactory.createHubConnection("https://socket.bittrex.com",null,true, logger);
 
             hubConnection.setReconnectOnError(false);
 
