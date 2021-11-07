@@ -171,3 +171,10 @@ if(project.findProperty("ossrhUsername") != null && project.findProperty("ossrhP
 
 
 
+
+allprojects {
+    tasks.withType(Test).configureEach {
+        forkEvery = 100
+    }
+
+}
